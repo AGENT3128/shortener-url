@@ -1,0 +1,61 @@
+version: '3'
+
+vars:
+  BINARY_NAME: shortener
+  BUILD_DIR: build
+  MAIN_FILE: cmd/shortener/main.go
+  GO_FILES:
+    sh: find . -type f -name '*.go'
+
+tasks:
+  clean:
+    desc: Clean build directory
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+
+  dependencies:
+    desc: Install dependencies
+    cmds:
+      - go mod tidy
+      - go mod download
+      - go mod verify
+
+  build:
+    desc: Build the shortener binary
+    deps: [clean]
+    # env:
+    #   GOOS: linux
+    #   GOARCH: amd64
+    #   CGO_ENABLED: 0
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - |
+        export PATH=$PATH:$(go env GOPATH)/bin
+        go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_FILE}}
+    sources:
+      - '**/*.go'
+    generates:
+      - '{{.BUILD_DIR}}/{{.BINARY_NAME}}'
+
+  lint:
+    desc: Run linters
+    cmds:
+      - |
+        export PATH=$PATH:$(go env GOPATH)/bin
+        golangci-lint run ./...
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test -v ./...
+
+  test_increment_1:
+    desc: Test increment 1
+    deps: [build]
+    cmds:
+      - shortenertest -test.v -test.run=^TestIteration1$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}}
+
+  run:
+    desc: Run the shortener binary
+    cmds:
+      - go run {{.MAIN_FILE}}
