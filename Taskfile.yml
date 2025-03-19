@@ -55,6 +55,11 @@ tasks:
     cmds:
       - shortenertest -test.v -test.run=^TestIteration1$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}}
 
+  test_increment_2:
+    desc: Test increment 2
+    deps: [build]
+    cmds:
+      - shortenertest -test.v -test.run=^TestIteration2$ -source-path=.
   run:
     desc: Run the shortener binary
     cmds:

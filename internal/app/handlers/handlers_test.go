@@ -4,14 +4,53 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
-	"github.com/AGENT3128/shortener-url/internal/app/storage"
 	"github.com/stretchr/testify/assert"
 )
 
+type MockRepository struct {
+	mu   sync.RWMutex
+	urls map[string]string
+}
+
+func NewMockRepository() *MockRepository {
+	return &MockRepository{
+		urls: make(map[string]string),
+	}
+}
+
+func (m *MockRepository) Add(shortID, originalURL string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.urls[shortID] = originalURL
+}
+
+func (m *MockRepository) GetByShortID(shortID string) (string, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	originalURL, ok := m.urls[shortID]
+	return originalURL, ok
+}
+
+func (m *MockRepository) GetByOriginalURL(originalURL string) (string, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for shortID, url := range m.urls {
+		if url == originalURL {
+			return shortID, true
+		}
+	}
+	return "", false
+}
+
 func TestURLHandler(t *testing.T) {
-	storage.InitStorage()
+	repo := NewMockRepository()
+	handler := NewURLHandler(repo)
 
 	type want struct {
 		contentType string
@@ -23,20 +62,6 @@ func TestURLHandler(t *testing.T) {
 		path   string
 		body   string
 	}
-
-	var firstShortID, secondShortID string
-
-	w1 := httptest.NewRecorder()
-	req1 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("ya.ru"))
-	URLHandler(w1, req1)
-	firstShortID = strings.TrimPrefix(w1.Body.String(), "http://localhost:8080/")
-
-	w2 := httptest.NewRecorder()
-	req2 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("yandex.ru"))
-	URLHandler(w2, req2)
-	secondShortID = strings.TrimPrefix(w2.Body.String(), "http://localhost:8080/")
-
-	assert.NotEqual(t, firstShortID, secondShortID)
 
 	tests := []struct {
 		name    string
@@ -67,8 +92,36 @@ func TestURLHandler(t *testing.T) {
 				contentType: "text/plain",
 			},
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest(tt.request.method, tt.request.path, strings.NewReader(tt.request.body))
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, request)
+			result := w.Result()
+			defer result.Body.Close()
+
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
+			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
+		})
+	}
+
+	firstShortID, ok := repo.GetByOriginalURL("ya.ru")
+	assert.True(t, ok)
+
+	secondShortID, ok := repo.GetByOriginalURL("yandex.ru")
+	assert.True(t, ok)
+
+	tests = []struct {
+		name    string
+		request request
+		want    want
+	}{
 		{
-			name: "get first original URL",
+			name: "get first original URL from short URL",
 			request: request{
 				method: http.MethodGet,
 				path:   "/" + firstShortID,
@@ -80,7 +133,7 @@ func TestURLHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "get second original URL",
+			name: "get second original URL from short URL",
 			request: request{
 				method: http.MethodGet,
 				path:   "/" + secondShortID,
@@ -98,7 +151,7 @@ func TestURLHandler(t *testing.T) {
 			request := httptest.NewRequest(tt.request.method, tt.request.path, strings.NewReader(tt.request.body))
 			w := httptest.NewRecorder()
 
-			URLHandler(w, request)
+			handler.ServeHTTP(w, request)
 			result := w.Result()
 			defer result.Body.Close()
 

@@ -15,9 +15,10 @@ func main() {
 }
 
 func runServer() error {
-	storage.InitStorage()
+	repository := storage.NewMemStorage()
+	handler := handlers.NewURLHandler(repository)
 	mux := http.NewServeMux()
-	mux.HandleFunc(`/`, handlers.URLHandler)
+	mux.HandleFunc(`/`, handler.ServeHTTP)
 	server := &http.Server{
 		Addr:              "localhost:8080",
 		Handler:           mux,
