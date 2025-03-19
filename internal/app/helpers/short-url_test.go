@@ -1,13 +1,15 @@
 package helpers
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestGenerateShortID(t *testing.T) {
 	t.Run("length check", func(t *testing.T) {
 		shortID := GenerateShortID()
-		if len(shortID) != LENGTH {
-			t.Errorf("Expected length of %d, got %d", LENGTH, len(shortID))
-		}
+		assert.Equal(t, LENGTH, len(shortID), "Expected length of %d, got %d", LENGTH, len(shortID))
 	})
 
 	t.Run("uniqueness check", func(t *testing.T) {
@@ -16,9 +18,7 @@ func TestGenerateShortID(t *testing.T) {
 
 		for i := 0; i < iterations; i++ {
 			id := GenerateShortID()
-			if ids[id] {
-				t.Errorf("Duplicate ID found: %s", id)
-			}
+			assert.False(t, ids[id], "Duplicate ID found: %s", id)
 			ids[id] = true
 		}
 	})

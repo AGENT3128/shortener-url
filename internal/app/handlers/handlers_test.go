@@ -74,8 +74,9 @@ func TestURLHandler(t *testing.T) {
 				path:   "/" + firstShortID,
 			},
 			want: want{
-				statusCode: http.StatusTemporaryRedirect,
-				location:   "ya.ru",
+				statusCode:  http.StatusTemporaryRedirect,
+				contentType: "text/plain",
+				location:    "ya.ru",
 			},
 		},
 		{
@@ -85,8 +86,9 @@ func TestURLHandler(t *testing.T) {
 				path:   "/" + secondShortID,
 			},
 			want: want{
-				statusCode: http.StatusTemporaryRedirect,
-				location:   "yandex.ru",
+				statusCode:  http.StatusTemporaryRedirect,
+				contentType: "text/plain",
+				location:    "yandex.ru",
 			},
 		},
 	}
@@ -100,14 +102,8 @@ func TestURLHandler(t *testing.T) {
 			result := w.Result()
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
-
-			if tt.want.contentType != "" {
-				assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
-			}
-
-			if tt.want.location != "" {
-				assert.Equal(t, tt.want.location, result.Header.Get("Location"))
-			}
+			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
+			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
 		})
 	}
 }
