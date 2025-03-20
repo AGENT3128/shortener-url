@@ -66,6 +66,14 @@ tasks:
     deps: [build]
     cmds:
       - shortenertest -test.v -test.run=^TestIteration3$ -source-path=.
+
+  test_increment_4:
+    desc: Test increment 4
+    deps: [build]
+    # env:
+    #   SERVER_PORT: 8081
+    cmds:
+      - shortenertest -test.v -test.run=^TestIteration4$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -server-port=$SERVER_PORT -source-path=.
   
   run:
     desc: Run the shortener binary

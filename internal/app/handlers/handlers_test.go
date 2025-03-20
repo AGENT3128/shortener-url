@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/AGENT3128/shortener-url/internal/app/config"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,7 +59,8 @@ func setupRouter(handler *URLHandler) *gin.Engine {
 
 func TestURLHandler(t *testing.T) {
 	repo := NewMockRepository()
-	handler := NewURLHandler(repo)
+	cfg := config.NewConfig()
+	handler := NewURLHandler(repo, cfg)
 	router := setupRouter(handler)
 
 	type want struct {

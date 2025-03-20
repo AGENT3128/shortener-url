@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/AGENT3128/shortener-url/internal/app/config"
 	"github.com/AGENT3128/shortener-url/internal/app/helpers"
 	"github.com/AGENT3128/shortener-url/internal/app/storage"
 	"github.com/gin-gonic/gin"
@@ -11,11 +12,13 @@ import (
 
 type URLHandler struct {
 	repository storage.Repository
+	cfg        *config.Config
 }
 
-func NewURLHandler(repo storage.Repository) *URLHandler {
+func NewURLHandler(repo storage.Repository, cfg *config.Config) *URLHandler {
 	return &URLHandler{
 		repository: repo,
+		cfg:        cfg,
 	}
 }
 
@@ -46,7 +49,7 @@ func (h *URLHandler) handlePost(c *gin.Context) {
 
 	c.Header("Content-Type", "text/plain")
 	c.Status(http.StatusCreated)
-	c.String(http.StatusCreated, "http://localhost:8080/%s", shortID)
+	c.String(http.StatusCreated, "%s/%s", h.cfg.BaseURLAddress, shortID)
 }
 
 func (h *URLHandler) handleGet(c *gin.Context) {
