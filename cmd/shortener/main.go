@@ -20,8 +20,7 @@ func runServer() error {
 	router := gin.Default()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
-	
-	
+
 	repository := storage.NewMemStorage()
 	handler := handlers.NewURLHandler(repository)
 	handler.SetupRoutes(router)
