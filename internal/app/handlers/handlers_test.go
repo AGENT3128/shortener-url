@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,9 +49,17 @@ func (m *MockRepository) GetByOriginalURL(originalURL string) (string, bool) {
 	return "", false
 }
 
+func setupRouter(handler *URLHandler) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	handler.SetupRoutes(router)
+	return router
+}
+
 func TestURLHandler(t *testing.T) {
 	repo := NewMockRepository()
 	handler := NewURLHandler(repo)
+	router := setupRouter(handler)
 
 	type want struct {
 		contentType string
@@ -96,10 +105,9 @@ func TestURLHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.request.method, tt.request.path, strings.NewReader(tt.request.body))
 			w := httptest.NewRecorder()
-
-			handler.ServeHTTP(w, request)
+			request := httptest.NewRequest(tt.request.method, tt.request.path, strings.NewReader(tt.request.body))
+			router.ServeHTTP(w, request)
 			result := w.Result()
 			defer result.Body.Close()
 
@@ -148,10 +156,10 @@ func TestURLHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.request.method, tt.request.path, strings.NewReader(tt.request.body))
 			w := httptest.NewRecorder()
+			request := httptest.NewRequest(tt.request.method, tt.request.path, strings.NewReader(tt.request.body))
 
-			handler.ServeHTTP(w, request)
+			router.ServeHTTP(w, request)
 			result := w.Result()
 			defer result.Body.Close()
 

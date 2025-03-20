@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/AGENT3128/shortener-url/internal/app/helpers"
 	"github.com/AGENT3128/shortener-url/internal/app/storage"
+	"github.com/gin-gonic/gin"
 )
 
 type URLHandler struct {
@@ -19,32 +19,22 @@ func NewURLHandler(repo storage.Repository) *URLHandler {
 	}
 }
 
-func (h *URLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodPost:
-		h.handlePost(w, r)
-	case http.MethodGet:
-		if r.URL.Path == "/" {
-			http.Error(w, "Not found", http.StatusNotFound)
-			return
-		}
-		h.handleGet(w, r)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
+func (h *URLHandler) SetupRoutes(r *gin.Engine) {
+	r.POST("/", h.handlePost)
+	r.GET("/:id", h.handleGet)
 }
 
-func (h *URLHandler) handlePost(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+func (h *URLHandler) handlePost(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
 		return
 	}
-	defer r.Body.Close()
+	defer c.Request.Body.Close()
 
 	originalURL := string(body)
 	if originalURL == "" {
-		http.Error(w, "Original URL is empty", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Original URL is empty"})
 		return
 	}
 
@@ -54,19 +44,19 @@ func (h *URLHandler) handlePost(w http.ResponseWriter, r *http.Request) {
 		h.repository.Add(shortID, originalURL)
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "http://localhost:8080/%s", shortID)
+	c.Header("Content-Type", "text/plain")
+	c.Status(http.StatusCreated)
+	c.String(http.StatusCreated, "http://localhost:8080/%s", shortID)
 }
 
-func (h *URLHandler) handleGet(w http.ResponseWriter, r *http.Request) {
-	shortID := r.URL.Path[1:]
+func (h *URLHandler) handleGet(c *gin.Context) {
+	shortID := c.Param("id")
 	originalURL, ok := h.repository.GetByShortID(shortID)
 	if !ok {
-		http.Error(w, "Short URL not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Short URL not found"})
 		return
 	}
-	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("Location", originalURL)
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	c.Header("Content-Type", "text/plain")
+	c.Header("Location", originalURL)
+	c.Status(http.StatusTemporaryRedirect)
 }
