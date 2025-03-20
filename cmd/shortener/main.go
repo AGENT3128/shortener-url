@@ -17,6 +17,7 @@ func main() {
 }
 
 func runServer() error {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
