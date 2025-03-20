@@ -68,7 +68,6 @@ tasks:
       - shortenertestbeta -test.v -test.run=^TestIteration3$ -source-path=.
 
   test_increment_4:
-    # TODO: local test not working, but tests passed in github actions
     desc: Test increment 4
     deps: [build]
     env:
@@ -76,6 +75,14 @@ tasks:
     cmds:
       - shortenertestbeta -test.v -test.run=^TestIteration4$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -server-port=$SERVER_PORT -source-path=.
   
+  test_increment_5:
+    desc: Test increment 5
+    deps: [build]
+    env:
+      SERVER_PORT: 9090
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration5$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -server-port=$SERVER_PORT
+
   run:
     desc: Run the shortener binary
     cmds:

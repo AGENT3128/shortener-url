@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,24 +13,29 @@ import (
 )
 
 func main() {
-	cfg := config.NewConfig()
-	if err := runServer(cfg); err != nil {
+	config.InitConfig()
+	// TODO: remove this, it's for debugging
+	fmt.Println("Server address:", config.Config.ServerAddress)
+	fmt.Println("Base URL address:", config.Config.BaseURLAddress)
+	//
+
+	if err := runServer(); err != nil {
 		panic(err)
 	}
 }
 
-func runServer(cfg *config.Config) error {
+func runServer() error {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
 	repository := storage.NewMemStorage()
-	handler := handlers.NewURLHandler(repository, cfg)
+	handler := handlers.NewURLHandler(repository)
 	handler.SetupRoutes(router)
 
 	server := &http.Server{
-		Addr:              cfg.ServerAddress,
+		Addr:              config.Config.ServerAddress,
 		Handler:           router,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,

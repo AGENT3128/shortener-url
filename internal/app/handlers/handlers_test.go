@@ -58,9 +58,9 @@ func setupRouter(handler *URLHandler) *gin.Engine {
 }
 
 func TestURLHandler(t *testing.T) {
+	config.InitConfig()
 	repo := NewMockRepository()
-	cfg := config.NewConfig()
-	handler := NewURLHandler(repo, cfg)
+	handler := NewURLHandler(repo)
 	router := setupRouter(handler)
 
 	type want struct {
