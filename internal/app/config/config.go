@@ -6,16 +6,15 @@ import (
 	"github.com/caarlos0/env/v11"
 )
 
-var Config *config
-
-type config struct {
+type Config struct {
 	ServerAddress  string `env:"SERVER_ADDRESS" envDefault:"localhost:8080"`  // server address
 	BaseURLAddress string `env:"BASE_URL" envDefault:"http://localhost:8080"` // base url for shortened urls
+	ReleaseMode    string `env:"RELEASE_MODE" envDefault:"debug"`             // release mode. Available options: debug, release, test
 }
 
-func InitConfig() {
+func NewConfig() *Config {
 	// Create new config instance
-	cfg := &config{}
+	cfg := &Config{}
 
 	// Parse environment variables
 	if err := env.Parse(cfg); err != nil {
@@ -27,6 +26,5 @@ func InitConfig() {
 	flag.StringVar(&cfg.BaseURLAddress, "b", cfg.BaseURLAddress, "Base URL for shortened URLs")
 	flag.Parse()
 
-	// Assign to global Config variable
-	Config = cfg
+	return cfg
 }
