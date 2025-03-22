@@ -24,6 +24,7 @@ func NewConfig() *Config {
 	// Define and parse command line flags
 	flag.StringVar(&cfg.ServerAddress, "a", cfg.ServerAddress, "HTTP server address")
 	flag.StringVar(&cfg.BaseURLAddress, "b", cfg.BaseURLAddress, "Base URL for shortened URLs")
+	flag.StringVar(&cfg.ReleaseMode, "r", cfg.ReleaseMode, "Release mode. Available options: debug, release, test")
 	flag.Parse()
 
 	return cfg
