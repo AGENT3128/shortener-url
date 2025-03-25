@@ -23,10 +23,6 @@ tasks:
   build:
     desc: Build the shortener binary
     deps: [clean]
-    # env:
-    #   GOOS: linux
-    #   GOARCH: amd64
-    #   CGO_ENABLED: 0
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - |
@@ -82,6 +78,30 @@ tasks:
       SERVER_PORT: 9090
     cmds:
       - shortenertestbeta -test.v -test.run=^TestIteration5$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -server-port=$SERVER_PORT
+  
+  test_increment_6:
+    desc: Test increment 6
+    deps: [build]
+    env:
+      SERVER_ADDRESS: "localhost:8081"
+      BASE_URL: "http://localhost:8081"
+      RELEASE_MODE: "release"
+      LOG_LEVEL: "info"
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration6$ -source-path=.
+
+  test_increment_all:
+    desc: Run all tests
+    deps: [
+      test_increment_1,
+      test_increment_2,
+      test_increment_3,
+      test_increment_4,
+      test_increment_5,
+      test_increment_6
+    ]
+    cmds:
+      - echo "All tests passed"
 
   run:
     desc: Run the shortener binary

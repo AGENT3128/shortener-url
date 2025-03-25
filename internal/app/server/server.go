@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AGENT3128/shortener-url/internal/app/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -89,7 +90,8 @@ func NewServer(opts ...Option) (*Server, error) {
 
 	// Create router and setup middleware
 	router := gin.Default()
-	router.Use(gin.Logger())
+	// router.Use(gin.Logger())
+	router.Use(middleware.HandlerLogger())
 	router.Use(gin.Recovery())
 
 	// Setup handlers
