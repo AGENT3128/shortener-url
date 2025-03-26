@@ -93,6 +93,7 @@ func NewServer(opts ...Option) (*Server, error) {
 	// router.Use(gin.Logger())
 	router.Use(middleware.HandlerLogger())
 	router.Use(gin.Recovery())
+	router.Use(middleware.GzipMiddleware())
 
 	// Setup handlers
 	for _, handler := range options.handlers {

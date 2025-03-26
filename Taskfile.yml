@@ -96,6 +96,12 @@ tasks:
     cmds:
       - shortenertestbeta -test.v -test.run=^TestIteration7$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=.
 
+  test_increment_8:
+    desc: Test increment 8
+    deps: [build]
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration8$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}}
+
   test_increment_all:
     desc: Run all tests
     deps: [
