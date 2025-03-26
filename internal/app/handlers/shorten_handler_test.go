@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,6 +13,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
+
+var testConfig = &config.Config{
+	ServerAddress:  "localhost:8080",
+	BaseURLAddress: "http://localhost:8080",
+	ReleaseMode:    "debug",
+	LogLevel:       "info",
+}
 
 type MockRepository struct {
 	mu   sync.RWMutex
@@ -51,9 +60,9 @@ func (m *MockRepository) GetByOriginalURL(originalURL string) (string, bool) {
 }
 
 func TestShortenHandler(t *testing.T) {
-	cfg := config.NewConfig()
+	// cfg := config.NewConfig()
 	repo := NewMockRepository()
-	shortenHandler := NewShortenHandler(repo, cfg.BaseURLAddress)
+	shortenHandler := NewShortenHandler(repo, testConfig.BaseURLAddress)
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 	router.POST("/", shortenHandler.Handler())
@@ -125,56 +134,102 @@ func TestShortenHandler(t *testing.T) {
 			assert.Equal(t, tt.want.location, result.Header.Get("Location"))
 		})
 	}
+}
 
-	// firstShortID, ok := repo.GetByOriginalURL("ya.ru")
-	// assert.True(t, ok)
+func TestAPIShortenHandler(t *testing.T) {
+	// cfg := config.NewConfig()
+	repo := NewMockRepository()
+	shortenHandler := NewAPIShortenHandler(repo, testConfig.BaseURLAddress)
+	gin.SetMode(gin.TestMode)
+	router := gin.Default()
+	router.POST("/api/shorten", shortenHandler.Handler())
 
-	// secondShortID, ok := repo.GetByOriginalURL("yandex.ru")
-	// assert.True(t, ok)
+	type want struct {
+		contentType string
+		statusCode  int
+		response    ShortenResponse
+	}
+	type request struct {
+		method string
+		path   string
+		body   ShortenRequest
+	}
 
-	// tests = []struct {
-	// 	name    string
-	// 	request request
-	// 	want    want
-	// }{
-	// 	{
-	// 		name: "get first original URL from short URL",
-	// 		request: request{
-	// 			method: http.MethodGet,
-	// 			path:   "/" + firstShortID,
-	// 		},
-	// 		want: want{
-	// 			statusCode:  http.StatusTemporaryRedirect,
-	// 			contentType: "text/plain",
-	// 			location:    "ya.ru",
-	// 		},
-	// 	},
-	// 	{
-	// 		name: "get second original URL from short URL",
-	// 		request: request{
-	// 			method: http.MethodGet,
-	// 			path:   "/" + secondShortID,
-	// 		},
-	// 		want: want{
-	// 			statusCode:  http.StatusTemporaryRedirect,
-	// 			contentType: "text/plain",
-	// 			location:    "yandex.ru",
-	// 		},
-	// 	},
-	// }
+	tests := []struct {
+		name    string
+		request request
+		want    want
+	}{
+		{
+			name: "create first short URL",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   ShortenRequest{URL: "ya.ru"},
+			},
+			want: want{
+				statusCode:  http.StatusCreated,
+				contentType: "application/json; charset=utf-8",
+				response: ShortenResponse{
+					Result: testConfig.BaseURLAddress + "/",
+				},
+			},
+		},
+		{
+			name: "create second short URL",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   ShortenRequest{URL: "yandex.ru"},
+			},
+			want: want{
+				statusCode:  http.StatusCreated,
+				contentType: "application/json; charset=utf-8",
+				response: ShortenResponse{
+					Result: testConfig.BaseURLAddress + "/",
+				},
+			},
+		},
+		{
+			name: "create empty short URL",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   ShortenRequest{URL: ""},
+			},
+			want: want{
+				statusCode:  http.StatusBadRequest,
+				contentType: "application/json; charset=utf-8",
+				response:    ShortenResponse{},
+			},
+		},
+	}
 
-	// for _, tt := range tests {
-	// 	t.Run(tt.name, func(t *testing.T) {
-	// 		w := httptest.NewRecorder()
-	// 		request := httptest.NewRequest(tt.request.method, tt.request.path, strings.NewReader(tt.request.body))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			jsonBody := fmt.Sprintf(`{"url": "%s"}`, tt.request.body.URL)
+			w := httptest.NewRecorder()
+			request := httptest.NewRequest(tt.request.method, tt.request.path, strings.NewReader(jsonBody))
+			//request.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(w, request)
+			result := w.Result()
+			defer result.Body.Close()
 
-	// 		router.ServeHTTP(w, request)
-	// 		result := w.Result()
-	// 		defer result.Body.Close()
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
+			// check body response
+			if tt.want.statusCode == http.StatusCreated {
+				var response ShortenResponse
+				err := json.NewDecoder(result.Body).Decode(&response)
+				assert.NoError(t, err)
 
-	// 		assert.Equal(t, tt.want.statusCode, result.StatusCode)
-	// 		assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
-	// 		assert.Equal(t, tt.want.location, result.Header.Get("Location"))
-	// 	})
-	// }
+				// check that response contains correct base URL
+				assert.Contains(t, response.Result, testConfig.BaseURLAddress+"/")
+
+				// check that after base URL there is a non-empty identifier
+				shortID := strings.TrimPrefix(response.Result, testConfig.BaseURLAddress+"/")
+				assert.NotEmpty(t, shortID)
+			}
+		})
+	}
 }

@@ -29,6 +29,7 @@ func run() error {
 		server.WithBaseURL(cfg.BaseURLAddress),
 		server.WithHandler(handlers.NewShortenHandler(repository, cfg.BaseURLAddress)),
 		server.WithHandler(handlers.NewRedirectHandler(repository)),
+		server.WithHandler(handlers.NewAPIShortenHandler(repository, cfg.BaseURLAddress)),
 	)
 	if err != nil {
 		return err

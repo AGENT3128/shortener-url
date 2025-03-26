@@ -90,6 +90,12 @@ tasks:
     cmds:
       - shortenertestbeta -test.v -test.run=^TestIteration6$ -source-path=.
 
+  test_increment_7:
+    desc: Test increment 7
+    deps: [build]
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration7$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=.
+
   test_increment_all:
     desc: Run all tests
     deps: [
@@ -98,7 +104,8 @@ tasks:
       test_increment_3,
       test_increment_4,
       test_increment_5,
-      test_increment_6
+      test_increment_6,
+      test_increment_7
     ]
     cmds:
       - echo "All tests passed"
