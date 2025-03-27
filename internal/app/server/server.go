@@ -48,21 +48,13 @@ type Server struct {
 	httpServer *http.Server
 	router     *gin.Engine
 	handlers   []IHandler
+	repo       Repository
 }
 type options struct {
-	config   *config.Config
-	logger   *zap.Logger
-	repo     Repository
-	handlers []IHandler
+	config *config.Config
+	logger *zap.Logger
 }
 type Option func(options *options) error
-
-func WithHandler(handler IHandler) Option {
-	return func(o *options) error {
-		o.handlers = append(o.handlers, handler)
-		return nil
-	}
-}
 
 func WithConfig(config *config.Config) Option {
 	return func(o *options) error {
@@ -105,15 +97,15 @@ func NewServer(opts ...Option) (*Server, error) {
 		return nil, fmt.Errorf("invalid release mode: %s", options.config.ReleaseMode)
 	}
 
+	var repo Repository
 	if options.config.FileStoragePath != "" {
-		repo, err := storage.NewFileStorage(options.config.FileStoragePath, options.logger)
+		var err error
+		repo, err = storage.NewFileStorage(options.config.FileStoragePath, options.logger)
 		if err != nil {
 			return nil, err
 		}
-		defer repo.Close()
-		options.repo = repo
 	} else {
-		options.repo = storage.NewMemStorage(logger.Log)
+		repo = storage.NewMemStorage(logger.Log)
 	}
 
 	// Create router and setup middleware
@@ -124,11 +116,13 @@ func NewServer(opts ...Option) (*Server, error) {
 	router.Use(middleware.GzipMiddleware())
 
 	// Setup handlers
-	options.handlers = append(options.handlers, handlers.NewShortenHandler(options.repo, options.config.BaseURLAddress, options.logger))
-	options.handlers = append(options.handlers, handlers.NewRedirectHandler(options.repo, options.logger))
-	options.handlers = append(options.handlers, handlers.NewAPIShortenHandler(options.repo, options.config.BaseURLAddress, options.logger))
+	handlers := []IHandler{
+		handlers.NewShortenHandler(repo, options.config.BaseURLAddress, options.logger),
+		handlers.NewRedirectHandler(repo, options.logger),
+		handlers.NewAPIShortenHandler(repo, options.config.BaseURLAddress, options.logger),
+	}
 
-	for _, handler := range options.handlers {
+	for _, handler := range handlers {
 		router.Handle(handler.Method(), handler.Pattern(), handler.Handler())
 	}
 
@@ -142,10 +136,18 @@ func NewServer(opts ...Option) (*Server, error) {
 			ReadHeaderTimeout: 10 * time.Second,
 		},
 		router:   router,
-		handlers: options.handlers,
+		handlers: handlers,
+		repo:     repo,
 	}, nil
 }
 
 func (s *Server) Run() error {
 	return s.httpServer.ListenAndServe()
+}
+
+func (s *Server) Close() error {
+	if closer, ok := s.repo.(interface{ Close() error }); ok {
+		return closer.Close()
+	}
+	return nil
 }

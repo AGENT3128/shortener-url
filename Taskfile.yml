@@ -109,6 +109,7 @@ tasks:
       TEMP_FILE: test.json
     cmds:
       - shortenertestbeta -test.v -test.run=^TestIteration9$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=. -file-storage-path=$TEMP_FILE
+      - rm -f $TEMP_FILE
 
 
   test_increment_all:

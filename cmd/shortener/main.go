@@ -26,6 +26,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	defer server.Close()
 
 	logger.Log.Info("Server address", zap.String("address", cfg.ServerAddress))
 	logger.Log.Info("Base URL address", zap.String("address", cfg.BaseURLAddress))
