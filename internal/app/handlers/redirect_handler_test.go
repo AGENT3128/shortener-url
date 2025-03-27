@@ -7,11 +7,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestRedirectHandler(t *testing.T) {
 	repo := NewMockRepository()
-	handler := NewRedirectHandler(repo)
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		t.Fatalf("failed to create logger: %v", err)
+	}
+	handler := NewRedirectHandler(repo, logger)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()

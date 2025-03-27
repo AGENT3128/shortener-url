@@ -12,6 +12,7 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/app/config"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 var testConfig = &config.Config{
@@ -62,7 +63,11 @@ func (m *MockRepository) GetByOriginalURL(originalURL string) (string, bool) {
 func TestShortenHandler(t *testing.T) {
 	// cfg := config.NewConfig()
 	repo := NewMockRepository()
-	shortenHandler := NewShortenHandler(repo, testConfig.BaseURLAddress)
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		t.Fatalf("failed to create logger: %v", err)
+	}
+	shortenHandler := NewShortenHandler(repo, testConfig.BaseURLAddress, logger)
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 	router.POST("/", shortenHandler.Handler())
@@ -139,7 +144,11 @@ func TestShortenHandler(t *testing.T) {
 func TestAPIShortenHandler(t *testing.T) {
 	// cfg := config.NewConfig()
 	repo := NewMockRepository()
-	shortenHandler := NewAPIShortenHandler(repo, testConfig.BaseURLAddress)
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		t.Fatalf("failed to create logger: %v", err)
+	}
+	shortenHandler := NewAPIShortenHandler(repo, testConfig.BaseURLAddress, logger)
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 	router.POST("/api/shorten", shortenHandler.Handler())
