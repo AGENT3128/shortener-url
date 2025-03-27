@@ -23,7 +23,7 @@ type URLData struct {
 	UUID        string
 }
 
-type UrlRecord struct {
+type URLRecord struct {
 	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
@@ -104,7 +104,7 @@ func (f *FileStorage) loadFromFile() error {
 
 	scanner := bufio.NewScanner(f.file)
 	for scanner.Scan() {
-		var record UrlRecord
+		var record URLRecord
 		if err := json.Unmarshal(scanner.Bytes(), &record); err != nil {
 			f.logger.Error(method, zap.Error(err))
 			continue
@@ -135,7 +135,7 @@ func (f *FileStorage) saveToFile() error {
 
 	writer := bufio.NewWriter(f.file)
 	for shortURL, urlData := range f.urls {
-		record := UrlRecord{
+		record := URLRecord{
 			UUID:        urlData.UUID,
 			ShortURL:    shortURL,
 			OriginalURL: urlData.OriginalURL,
