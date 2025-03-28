@@ -14,6 +14,7 @@ task: Available tasks for this project:
 * test_increment_1:       Test increment 1
 ... <omited> ...
 * test_increment_N:       Test increment N
+* test_increment_all:       Run all tests
 ```
 
 

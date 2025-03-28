@@ -23,10 +23,6 @@ tasks:
   build:
     desc: Build the shortener binary
     deps: [clean]
-    # env:
-    #   GOOS: linux
-    #   GOARCH: amd64
-    #   CGO_ENABLED: 0
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - |
@@ -82,6 +78,53 @@ tasks:
       SERVER_PORT: 9090
     cmds:
       - shortenertestbeta -test.v -test.run=^TestIteration5$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -server-port=$SERVER_PORT
+  
+  test_increment_6:
+    desc: Test increment 6
+    deps: [build]
+    env:
+      SERVER_ADDRESS: "localhost:8081"
+      BASE_URL: "http://localhost:8081"
+      RELEASE_MODE: "release"
+      LOG_LEVEL: "info"
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration6$ -source-path=.
+
+  test_increment_7:
+    desc: Test increment 7
+    deps: [build]
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration7$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=.
+
+  test_increment_8:
+    desc: Test increment 8
+    deps: [build]
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration8$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}}
+
+  test_increment_9:
+    desc: Test increment 9
+    deps: [build]
+    env:
+      TEMP_FILE: test.json
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration9$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=. -file-storage-path=$TEMP_FILE
+      - rm -f $TEMP_FILE
+
+
+  test_increment_all:
+    desc: Run all tests
+    cmds:
+      - task: test_increment_1
+      - task: test_increment_2
+      - task: test_increment_3
+      - task: test_increment_4
+      - task: test_increment_5
+      - task: test_increment_6
+      - task: test_increment_7
+      - task: test_increment_8
+      - task: test_increment_9
+      - echo "All tests passed"
 
   run:
     desc: Run the shortener binary
