@@ -53,6 +53,7 @@ type Server struct {
 type options struct {
 	config *config.Config
 	logger *zap.Logger
+	db     *storage.Database
 }
 type Option func(options *options) error
 
@@ -70,6 +71,12 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
+func WithDatabase(db *storage.Database) Option {
+	return func(o *options) error {
+		o.db = db
+		return nil
+	}
+}
 func NewServer(opts ...Option) (*Server, error) {
 	options := &options{}
 	for _, opt := range opts {
@@ -120,6 +127,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlers.NewShortenHandler(repo, options.config.BaseURLAddress, options.logger),
 		handlers.NewRedirectHandler(repo, options.logger),
 		handlers.NewAPIShortenHandler(repo, options.config.BaseURLAddress, options.logger),
+		handlers.NewPingHandler(options.db, options.logger),
 	}
 
 	for _, handler := range handlers {

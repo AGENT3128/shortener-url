@@ -47,7 +47,7 @@ func TestFileStorage(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			repo.Add(tt.shortID, tt.originalURL)
 		})
 		t.Run("check urls by shortID:"+tt.shortID, func(t *testing.T) {
