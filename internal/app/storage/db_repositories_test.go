@@ -22,7 +22,10 @@ func TestDBStorage(t *testing.T) {
 	require.NoError(t, err)
 	defer database.Conn.Close()
 
-	// Check if table exists and create if not exists
+	// drop table if exists
+	database.Conn.Exec(ctx, "DROP TABLE IF EXISTS urls_tests")
+
+	// create table if not exists
 	sql := `
 		CREATE TABLE IF NOT EXISTS urls_tests (
 			id SERIAL PRIMARY KEY,
@@ -82,7 +85,4 @@ func TestDBStorage(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, count)
 
-	// truncate table after ensuring it exists
-	_, err = database.Conn.Exec(ctx, "TRUNCATE TABLE urls_tests")
-	require.NoError(t, err)
 }
