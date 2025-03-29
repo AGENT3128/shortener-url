@@ -144,8 +144,16 @@ func (f *FileStorage) saveToFile() error {
 		if err != nil {
 			continue
 		}
-		writer.Write(data)
-		writer.WriteByte('\n')
+		_, err = writer.Write(data)
+		if err != nil {
+			f.logger.Error(method, zap.Error(err))
+			continue
+		}
+		err = writer.WriteByte('\n')
+		if err != nil {
+			f.logger.Error(method, zap.Error(err))
+			continue
+		}
 		f.logger.Info(method, zap.Any("record", record))
 	}
 	return writer.Flush()
