@@ -143,3 +143,11 @@ tasks:
     desc: Run the shortener binary
     cmds:
       - go run {{.MAIN_FILE}} -d 'postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+
+  generate-mocks:
+    desc: Generate mocks for testing
+    cmds:
+      - mkdir -p internal/app/storage/mocks
+      - |
+        export PATH=$PATH:$(go env GOPATH)/bin
+        mockgen -source=internal/app/server/server.go -destination=internal/app/storage/mocks/mock_repository.go -package=mocks Repository
