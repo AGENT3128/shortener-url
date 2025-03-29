@@ -137,6 +137,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlers.NewRedirectHandler(repo, options.logger),
 		handlers.NewAPIShortenHandler(repo, options.config.BaseURLAddress, options.logger),
 		handlers.NewPingHandler(database, options.logger),
+		handlers.NewShortenBatchHandler(repo, options.config.BaseURLAddress, options.logger),
 	}
 
 	for _, handler := range handlers {

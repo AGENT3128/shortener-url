@@ -32,6 +32,7 @@ func (r *URLRepository) WithTableName(name string) *URLRepository {
 }
 
 func (r *URLRepository) Add(shortID, originalURL string) {
+	r.logger.Debug("Adding URL to database", zap.String("short_id", shortID), zap.String("original_url", originalURL))
 	sql := `
 		INSERT INTO ` + r.tableName + ` (short_id, original_url, created_at)
 		VALUES ($1, $2, $3)
@@ -51,6 +52,7 @@ func (r *URLRepository) Add(shortID, originalURL string) {
 }
 
 func (r *URLRepository) GetByShortID(shortID string) (string, bool) {
+	r.logger.Debug("Getting URL from database", zap.String("short_id", shortID))
 	sql := `
 		SELECT original_url
 		FROM ` + r.tableName + `
@@ -72,6 +74,7 @@ func (r *URLRepository) GetByShortID(shortID string) (string, bool) {
 }
 
 func (r *URLRepository) GetByOriginalURL(originalURL string) (string, bool) {
+	r.logger.Debug("Getting URL from database", zap.String("original_url", originalURL))
 	sql := `
 		SELECT short_id
 		FROM ` + r.tableName + `
@@ -89,4 +92,34 @@ func (r *URLRepository) GetByOriginalURL(originalURL string) (string, bool) {
 		return "", false
 	}
 	return url.ShortID, true
+}
+
+func (r *URLRepository) AddBatch(urls []URL) error {
+	r.logger.Debug("Adding batch of URLs to database", zap.Any("urls", urls))
+	sql := `
+		INSERT INTO ` + r.tableName + ` (short_id, original_url, created_at)
+		VALUES ($1, $2, $3)
+	`
+	tx, err := r.db.Conn.Begin(context.Background())
+	if err != nil {
+		r.logger.Error("Failed to begin transaction", zap.Error(err))
+		return err
+	}
+	defer tx.Rollback(context.Background())
+
+	for _, url := range urls {
+		r.logger.Info("Adding URL to database", zap.Any("url", url))
+		_, err := tx.Exec(context.Background(), sql, url.ShortID, url.OriginalURL, time.Now())
+		if err != nil {
+			r.logger.Error("Failed to add URL to database", zap.Error(err))
+			return err
+		}
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		r.logger.Error("Failed to commit transaction", zap.Error(err))
+		return err
+	}
+	return nil
 }
