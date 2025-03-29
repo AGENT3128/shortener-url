@@ -3,18 +3,18 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/AGENT3128/shortener-url/internal/app/storage"
+	"github.com/AGENT3128/shortener-url/internal/app/db"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
 // PingHandler handles the ping database connection request
 type PingHandler struct {
-	db     *storage.Database
+	db     *db.Database
 	logger *zap.Logger
 }
 
-func NewPingHandler(db *storage.Database, logger *zap.Logger) *PingHandler {
+func NewPingHandler(db *db.Database, logger *zap.Logger) *PingHandler {
 	logger = logger.With(zap.String("handler", "PingHandler"))
 	return &PingHandler{
 		db:     db,
@@ -32,7 +32,7 @@ func (h *PingHandler) Method() string {
 
 func (h *PingHandler) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := h.db.Ping(c.Request.Context()); err != nil {
+		if err := h.db.Conn.Ping(c.Request.Context()); err != nil {
 			h.logger.Error("Failed to ping database", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to ping database"})
 			return

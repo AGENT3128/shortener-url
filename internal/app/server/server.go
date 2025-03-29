@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/AGENT3128/shortener-url/internal/app/config"
+	"github.com/AGENT3128/shortener-url/internal/app/db"
 	"github.com/AGENT3128/shortener-url/internal/app/handlers"
 	"github.com/AGENT3128/shortener-url/internal/app/logger"
 	"github.com/AGENT3128/shortener-url/internal/app/middleware"
@@ -53,7 +54,6 @@ type Server struct {
 type options struct {
 	config *config.Config
 	logger *zap.Logger
-	db     *storage.Database
 }
 type Option func(options *options) error
 
@@ -71,12 +71,6 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
-func WithDatabase(db *storage.Database) Option {
-	return func(o *options) error {
-		o.db = db
-		return nil
-	}
-}
 func NewServer(opts ...Option) (*Server, error) {
 	options := &options{}
 	for _, opt := range opts {
@@ -104,8 +98,23 @@ func NewServer(opts ...Option) (*Server, error) {
 		return nil, fmt.Errorf("invalid release mode: %s", options.config.ReleaseMode)
 	}
 
+	var database *db.Database
+	if options.config.DatabaseDSN != "" {
+		var err error
+		database, err = db.NewDatabase(options.config.DatabaseDSN)
+		if err != nil {
+			return nil, err
+		}
+		err = database.Migrate()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var repo Repository
-	if options.config.FileStoragePath != "" {
+	if database != nil {
+		repo = storage.NewURLRepository(database, options.logger)
+	} else if options.config.FileStoragePath != "" {
 		var err error
 		repo, err = storage.NewFileStorage(options.config.FileStoragePath, options.logger)
 		if err != nil {
@@ -127,7 +136,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlers.NewShortenHandler(repo, options.config.BaseURLAddress, options.logger),
 		handlers.NewRedirectHandler(repo, options.logger),
 		handlers.NewAPIShortenHandler(repo, options.config.BaseURLAddress, options.logger),
-		handlers.NewPingHandler(options.db, options.logger),
+		handlers.NewPingHandler(database, options.logger),
 	}
 
 	for _, handler := range handlers {
