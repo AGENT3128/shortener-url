@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/AGENT3128/shortener-url/internal/app/config"
+	"github.com/AGENT3128/shortener-url/internal/app/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -33,11 +34,15 @@ func NewMockRepository() *MockRepository {
 	}
 }
 
-func (m *MockRepository) Add(shortID, originalURL string) {
+func (m *MockRepository) Add(shortID, originalURL string) (string, error) {
+	if _, ok := m.GetByOriginalURL(originalURL); ok {
+		return shortID, storage.ErrURLExists
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	m.urls[shortID] = originalURL
+	return shortID, nil
 }
 
 func (m *MockRepository) GetByShortID(shortID string) (string, bool) {
@@ -193,6 +198,21 @@ func TestAPIShortenHandler(t *testing.T) {
 			},
 			want: want{
 				statusCode:  http.StatusCreated,
+				contentType: "application/json; charset=utf-8",
+				response: ShortenResponse{
+					Result: testConfig.BaseURLAddress + "/",
+				},
+			},
+		},
+		{
+			name: "create short URL that already exists",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   ShortenRequest{URL: "ya.ru"},
+			},
+			want: want{
+				statusCode:  http.StatusConflict,
 				contentType: "application/json; charset=utf-8",
 				response: ShortenResponse{
 					Result: testConfig.BaseURLAddress + "/",

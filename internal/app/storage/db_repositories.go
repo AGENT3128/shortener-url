@@ -2,9 +2,12 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/AGENT3128/shortener-url/internal/app/db"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
 )
 
@@ -31,7 +34,7 @@ func (r *URLRepository) WithTableName(name string) *URLRepository {
 	return r
 }
 
-func (r *URLRepository) Add(shortID, originalURL string) {
+func (r *URLRepository) Add(shortID, originalURL string) (string, error) {
 	r.logger.Debug("Adding URL to database", zap.String("short_id", shortID), zap.String("original_url", originalURL))
 	sql := `
 		INSERT INTO ` + r.tableName + ` (short_id, original_url, created_at)
@@ -45,10 +48,20 @@ func (r *URLRepository) Add(shortID, originalURL string) {
 		originalURL,
 		time.Now(),
 	)
+
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			// get existing shortID
+			if existingShortID, exists := r.GetByOriginalURL(originalURL); exists {
+				return existingShortID, ErrURLExists
+			}
+		}
 		r.logger.Error("Failed to add URL to database", zap.Error(err))
-		return
+		return "", err
 	}
+
+	return shortID, nil
 }
 
 func (r *URLRepository) GetByShortID(shortID string) (string, bool) {

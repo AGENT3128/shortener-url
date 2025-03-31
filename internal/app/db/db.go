@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -42,13 +41,19 @@ func NewConnectionPool(databaseDSN string) (*pgxpool.Pool, error) {
 
 func (d *Database) Migrate() error {
 	// Read and execute migration file
-	query, err := os.ReadFile("migrations/urls.sql")
-	if err != nil {
-		return fmt.Errorf("failed to read migration file: %w", err)
-	}
+	query := `
+		CREATE TABLE IF NOT EXISTS urls (
+		id SERIAL PRIMARY KEY,
+		short_id TEXT NOT NULL UNIQUE,
+		original_url TEXT NOT NULL,
+		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
 
+	CREATE INDEX IF NOT EXISTS idx_urls_short_id ON urls(short_id);
+	CREATE UNIQUE INDEX IF NOT EXISTS urls_original_url_idx ON urls (original_url);
+	`
 	// Execute migration query
-	_, err = d.Conn.Exec(context.Background(), string(query))
+	_, err := d.Conn.Exec(context.Background(), query)
 	if err != nil {
 		return fmt.Errorf("failed to execute migration: %w", err)
 	}

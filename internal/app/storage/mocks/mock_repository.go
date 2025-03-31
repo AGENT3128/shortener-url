@@ -211,9 +211,12 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockRepository) Add(shortID, originalURL string) {
+func (m *MockRepository) Add(shortID, originalURL string) (string, error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Add", shortID, originalURL)
+	ret := m.ctrl.Call(m, "Add", shortID, originalURL)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Add indicates an expected call of Add.
@@ -276,9 +279,12 @@ func (m *MockShortenerSet) EXPECT() *MockShortenerSetMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockShortenerSet) Add(shortID, originalURL string) {
+func (m *MockShortenerSet) Add(shortID, originalURL string) (string, error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Add", shortID, originalURL)
+	ret := m.ctrl.Call(m, "Add", shortID, originalURL)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Add indicates an expected call of Add.

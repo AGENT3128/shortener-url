@@ -20,13 +20,20 @@ func NewMemStorage(logger *zap.Logger) *MemStorage {
 	}
 }
 
-func (m *MemStorage) Add(shortID, originalURL string) {
+func (m *MemStorage) Add(shortID, originalURL string) (string, error) {
 	const method = "Add"
+	// before adding, check if the URL already exists (check by original URL)
+	if _, ok := m.GetByOriginalURL(originalURL); ok {
+		m.logger.Info(method, zap.String("originalURL", originalURL), zap.String("shortID", shortID), zap.Bool("exists", ok))
+		return shortID, ErrURLExists
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	m.urls[shortID] = originalURL
 	m.logger.Info(method, zap.String("shortID", shortID), zap.String("originalURL", originalURL))
+	return shortID, nil
 }
 
 func (m *MemStorage) GetByShortID(shortID string) (string, bool) {

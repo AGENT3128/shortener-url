@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,7 +20,7 @@ type URLOriginalGetter interface {
 
 // URLSaver describes the behavior for saving short URL by original URL
 type URLSaver interface {
-	Add(shortID, originalURL string)
+	Add(shortID, originalURL string) (string, error)
 }
 
 // URLRepository combines URL getting and saving capabilities
@@ -68,13 +69,26 @@ func (h *ShortenHandler) Handler() gin.HandlerFunc {
 		}
 
 		// before adding to repository, check if the original URL already exists
-		shortID, ok := h.repository.GetByOriginalURL(originalURL)
-		h.logger.Info("get original URL", zap.String("originalURL", originalURL), zap.Bool("exists", ok))
-		if !ok {
-			shortID = helpers.GenerateShortID()
-			h.repository.Add(shortID, originalURL)
-			h.logger.Info("add to repository", zap.String("shortID", shortID), zap.String("originalURL", originalURL))
+		// shortID, ok := h.repository.GetByOriginalURL(originalURL)
+		// h.logger.Info("get original URL", zap.String("originalURL", originalURL), zap.Bool("exists", ok))
+		// if !ok {
+		// 	shortID = helpers.GenerateShortID()
+		// 	h.repository.Add(shortID, originalURL)
+		// 	h.logger.Info("add to repository", zap.String("shortID", shortID), zap.String("originalURL", originalURL))
+		// }
+
+		shortID, err := h.repository.Add(helpers.GenerateShortID(), originalURL)
+		if err != nil {
+			if errors.Is(err, storage.ErrURLExists) {
+				h.logger.Info("URL already exists", zap.String("originalURL", originalURL))
+				c.String(http.StatusConflict, "%s/%s", h.baseURL, shortID)
+				return
+			}
+			h.logger.Error("failed to add to repository", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
+		h.logger.Info("add to repository", zap.String("shortID", shortID), zap.String("originalURL", originalURL))
 
 		c.Header("Content-Type", "text/plain")
 		c.String(http.StatusCreated, "%s/%s", h.baseURL, shortID)
@@ -135,13 +149,25 @@ func (h *APIShortenHandler) Handler() gin.HandlerFunc {
 		}
 
 		// before adding to repository, check if the original URL already exists
-		shortID, ok := h.repository.GetByOriginalURL(request.URL)
-		h.logger.Info("get already existing original URL", zap.String("originalURL", request.URL), zap.Bool("exists", ok))
-		if !ok {
-			shortID = helpers.GenerateShortID()
-			h.repository.Add(shortID, request.URL)
-			h.logger.Info("add to repository", zap.String("shortID", shortID), zap.String("originalURL", request.URL))
+		// shortID, ok := h.repository.GetByOriginalURL(request.URL)
+		// h.logger.Info("get already existing original URL", zap.String("originalURL", request.URL), zap.Bool("exists", ok))
+		// if !ok {
+		// 	shortID = helpers.GenerateShortID()
+		// 	h.repository.Add(shortID, request.URL)
+		// 	h.logger.Info("add to repository", zap.String("shortID", shortID), zap.String("originalURL", request.URL))
+		// }
+		shortID, err := h.repository.Add(helpers.GenerateShortID(), request.URL)
+		if err != nil {
+			if errors.Is(err, storage.ErrURLExists) {
+				h.logger.Info("URL already exists", zap.String("originalURL", request.URL))
+				c.JSON(http.StatusConflict, ShortenResponse{Result: fmt.Sprintf("%s/%s", h.baseURL, shortID)})
+				return
+			}
+			h.logger.Error("failed to add to repository", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
+		h.logger.Info("add to repository", zap.String("shortID", shortID), zap.String("originalURL", request.URL))
 		c.JSON(http.StatusCreated, ShortenResponse{Result: fmt.Sprintf("%s/%s", h.baseURL, shortID)})
 	}
 }

@@ -50,8 +50,14 @@ func NewFileStorage(path string, logger *zap.Logger) (*FileStorage, error) {
 	return fs, nil
 }
 
-func (f *FileStorage) Add(shortID, originalURL string) {
+func (f *FileStorage) Add(shortID, originalURL string) (string, error) {
 	const method = "Add"
+	// before adding, check if the URL already exists (check by original URL)
+	if _, ok := f.GetByOriginalURL(originalURL); ok {
+		f.logger.Info(method, zap.String("originalURL", originalURL), zap.String("shortID", shortID), zap.Bool("exists", ok))
+		return shortID, ErrURLExists
+	}
+
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -66,6 +72,7 @@ func (f *FileStorage) Add(shortID, originalURL string) {
 	if err := f.saveToFile(); err != nil {
 		f.logger.Error(method, zap.Error(err))
 	}
+	return shortID, nil
 }
 
 func (f *FileStorage) GetByShortID(shortID string) (string, bool) {

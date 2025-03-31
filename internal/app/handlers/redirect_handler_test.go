@@ -29,7 +29,11 @@ func TestRedirectHandler(t *testing.T) {
 	}
 
 	for shortID, originalURL := range testCases {
-		repo.Add(shortID, originalURL)
+		shortID, err := repo.Add(shortID, originalURL)
+		if err != nil {
+			t.Fatalf("failed to add url: %v", err)
+		}
+		t.Logf("added url: %s -> %s", shortID, originalURL)
 	}
 
 	tests := []struct {

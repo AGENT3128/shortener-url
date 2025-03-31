@@ -39,7 +39,7 @@ type Repository interface {
 }
 
 type ShortenerSet interface {
-	Add(shortID, originalURL string)
+	Add(shortID, originalURL string) (string, error)
 }
 type ShortenerGet interface {
 	GetByShortID(shortID string) (string, bool)
