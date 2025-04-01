@@ -5,13 +5,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/AGENT3128/shortener-url/internal/app/storage/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
 func TestRedirectHandler(t *testing.T) {
-	repo := NewMockRepository()
+	repo := mocks.NewMockMemoryRepository()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		t.Fatalf("failed to create logger: %v", err)
