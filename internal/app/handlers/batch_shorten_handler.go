@@ -83,7 +83,7 @@ func (h *ShortenBatchHandler) Handler() gin.HandlerFunc {
 				continue
 			}
 
-			shortID, exists := h.repository.GetByOriginalURL(request.OriginalURL)
+			shortID, exists := h.repository.GetByOriginalURL(c.Request.Context(), request.OriginalURL)
 			if !exists {
 				shortID = helpers.GenerateShortID()
 				// for DB, collect batch, for other storages add immediately
@@ -93,7 +93,7 @@ func (h *ShortenBatchHandler) Handler() gin.HandlerFunc {
 						OriginalURL: request.OriginalURL,
 					})
 				} else {
-					h.repository.Add(shortID, request.OriginalURL)
+					h.repository.Add(c.Request.Context(), shortID, request.OriginalURL)
 				}
 			}
 
@@ -105,7 +105,7 @@ func (h *ShortenBatchHandler) Handler() gin.HandlerFunc {
 
 		// batch adding for DB
 		if supportsTx && len(urls) > 0 {
-			if err := txRepo.AddBatch(urls); err != nil {
+			if err := txRepo.AddBatch(c.Request.Context(), urls); err != nil {
 				h.logger.Error("failed to add batch", zap.Error(err))
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 				return

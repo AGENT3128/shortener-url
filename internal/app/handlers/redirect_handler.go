@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -10,7 +11,7 @@ import (
 
 // URLShortGetter describes the behavior for retrieving original URL by short ID
 type URLShortGetter interface {
-	GetByShortID(shortID string) (string, bool)
+	GetByShortID(ctx context.Context, shortID string) (string, bool)
 }
 
 // RedirectHandler handles redirects by short URL
@@ -38,7 +39,7 @@ func (h *RedirectHandler) Method() string {
 func (h *RedirectHandler) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		shortID := strings.TrimPrefix(c.Request.URL.Path, "/")
-		originalURL, ok := h.repository.GetByShortID(shortID)
+		originalURL, ok := h.repository.GetByShortID(c.Request.Context(), shortID)
 		h.logger.Info("get original URL", zap.String("shortID", shortID), zap.String("originalURL", originalURL), zap.Bool("exists", ok))
 		if !ok {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Short URL not found"})

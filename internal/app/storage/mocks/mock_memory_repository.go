@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -47,8 +48,8 @@ func NewMockMemoryRepository() *MockMemoryRepository {
 }
 
 // Add adds a new URL to the repository
-func (m *MockMemoryRepository) Add(shortID, originalURL string) (string, error) {
-	if _, ok := m.GetByOriginalURL(originalURL); ok {
+func (m *MockMemoryRepository) Add(ctx context.Context, shortID, originalURL string) (string, error) {
+	if _, ok := m.GetByOriginalURL(ctx, originalURL); ok {
 		return shortID, ErrURLExists
 	}
 	m.mu.Lock()
@@ -59,7 +60,7 @@ func (m *MockMemoryRepository) Add(shortID, originalURL string) (string, error) 
 }
 
 // GetByShortID retrieves the original URL by short ID
-func (m *MockMemoryRepository) GetByShortID(shortID string) (string, bool) {
+func (m *MockMemoryRepository) GetByShortID(ctx context.Context, shortID string) (string, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -68,7 +69,7 @@ func (m *MockMemoryRepository) GetByShortID(shortID string) (string, bool) {
 }
 
 // GetByOriginalURL retrieves the short ID by original URL
-func (m *MockMemoryRepository) GetByOriginalURL(originalURL string) (string, bool) {
+func (m *MockMemoryRepository) GetByOriginalURL(ctx context.Context, originalURL string) (string, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 

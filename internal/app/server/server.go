@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -39,11 +40,11 @@ type Repository interface {
 }
 
 type ShortenerSet interface {
-	Add(shortID, originalURL string) (string, error)
+	Add(ctx context.Context, shortID, originalURL string) (string, error)
 }
 type ShortenerGet interface {
-	GetByShortID(shortID string) (string, bool)
-	GetByOriginalURL(originalURL string) (string, bool)
+	GetByShortID(ctx context.Context, shortID string) (string, bool)
+	GetByOriginalURL(ctx context.Context, originalURL string) (string, bool)
 }
 type Server struct {
 	httpServer *http.Server
@@ -98,14 +99,24 @@ func NewServer(opts ...Option) (*Server, error) {
 		return nil, fmt.Errorf("invalid release mode: %s", options.config.ReleaseMode)
 	}
 
+	ctx := context.Background()
+
 	var database *db.Database
 	if options.config.DatabaseDSN != "" {
 		var err error
-		database, err = db.NewDatabase(options.config.DatabaseDSN)
+
+		ctxDB, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		database, err = db.NewDatabase(ctxDB, options.config.DatabaseDSN)
 		if err != nil {
 			return nil, err
 		}
-		err = database.Migrate()
+
+		ctxMigration, cancelMigration := context.WithTimeout(ctx, 1*time.Minute)
+		defer cancelMigration()
+
+		err = database.MigrateWithContext(ctxMigration)
 		if err != nil {
 			return nil, err
 		}
@@ -161,6 +172,10 @@ func NewServer(opts ...Option) (*Server, error) {
 
 func (s *Server) Run() error {
 	return s.httpServer.ListenAndServe()
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
 }
 
 func (s *Server) Close() error {

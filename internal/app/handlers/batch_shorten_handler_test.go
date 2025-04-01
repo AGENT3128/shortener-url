@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/AGENT3128/shortener-url/internal/app/storage/mocks"
 	"github.com/gin-gonic/gin"
@@ -14,6 +16,10 @@ import (
 )
 
 func TestShortenBatchHandler(t *testing.T) {
+	// context for test
+	ctx := context.Background()
+
+
 	repo := mocks.NewMockMemoryRepository()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -91,13 +97,17 @@ func TestShortenBatchHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// context for request
+			requestCtx, requestCancel := context.WithTimeout(ctx, 2*time.Second)
+			defer requestCancel()
+
 			// prepare JSON request
 			jsonData, err := json.Marshal(tt.requests)
 			assert.NoError(t, err)
 
 			// create request
 			w := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", strings.NewReader(string(jsonData)))
+			req := httptest.NewRequestWithContext(requestCtx, http.MethodPost, "/api/shorten/batch", strings.NewReader(string(jsonData)))
 			req.Header.Set("Content-Type", "application/json")
 
 			// execute request

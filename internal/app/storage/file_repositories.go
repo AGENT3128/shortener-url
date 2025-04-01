@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"os"
 	"strconv"
@@ -50,10 +51,10 @@ func NewFileStorage(path string, logger *zap.Logger) (*FileStorage, error) {
 	return fs, nil
 }
 
-func (f *FileStorage) Add(shortID, originalURL string) (string, error) {
+func (f *FileStorage) Add(ctx context.Context, shortID, originalURL string) (string, error) {
 	const method = "Add"
 	// before adding, check if the URL already exists (check by original URL)
-	if _, ok := f.GetByOriginalURL(originalURL); ok {
+	if _, ok := f.GetByOriginalURL(ctx, originalURL); ok {
 		f.logger.Info(method, zap.String("originalURL", originalURL), zap.String("shortID", shortID), zap.Bool("exists", ok))
 		return shortID, ErrURLExists
 	}
@@ -75,7 +76,7 @@ func (f *FileStorage) Add(shortID, originalURL string) (string, error) {
 	return shortID, nil
 }
 
-func (f *FileStorage) GetByShortID(shortID string) (string, bool) {
+func (f *FileStorage) GetByShortID(ctx context.Context, shortID string) (string, bool) {
 	const method = "GetByShortID"
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -88,7 +89,7 @@ func (f *FileStorage) GetByShortID(shortID string) (string, bool) {
 	return urlData.OriginalURL, true
 }
 
-func (f *FileStorage) GetByOriginalURL(originalURL string) (string, bool) {
+func (f *FileStorage) GetByOriginalURL(ctx context.Context, originalURL string) (string, bool) {
 	const method = "GetByOriginalURL"
 	f.mu.RLock()
 	defer f.mu.RUnlock()

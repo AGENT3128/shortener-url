@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -25,6 +27,9 @@ type ShortenResponse struct {
 }
 
 func TestGzipMiddleware(t *testing.T) {
+	// context for test
+	ctx := context.Background()
+
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	router.Use(GzipMiddleware())
@@ -71,6 +76,9 @@ func TestGzipMiddleware(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			requestCtx, requestCancel := context.WithTimeout(ctx, 2*time.Second)
+			defer requestCancel()
+
 			if tt.url == "" {
 				tt.url = fmt.Sprintf("https://%s.ru", strings.Repeat("yandex", 500))
 			}
@@ -86,7 +94,7 @@ func TestGzipMiddleware(t *testing.T) {
 				reqBody = strings.NewReader(jsonBody)
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/test", reqBody)
+			req := httptest.NewRequestWithContext(requestCtx, http.MethodPost, "/test", reqBody)
 			req.Header.Set("Content-Type", "application/json")
 
 			if tt.useGzipRequest {

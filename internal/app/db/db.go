@@ -16,8 +16,8 @@ type Database struct {
 	Conn *pgxpool.Pool
 }
 
-func NewDatabase(databaseDSN string) (*Database, error) {
-	pool, err := NewConnectionPool(databaseDSN)
+func NewDatabase(ctx context.Context, databaseDSN string) (*Database, error) {
+	pool, err := NewConnectionPool(ctx, databaseDSN)
 	if err != nil {
 		return nil, err
 	}
@@ -25,18 +25,18 @@ func NewDatabase(databaseDSN string) (*Database, error) {
 	return &Database{Conn: pool}, nil
 }
 
-func NewConnectionPool(databaseDSN string) (*pgxpool.Pool, error) {
+func NewConnectionPool(ctx context.Context, databaseDSN string) (*pgxpool.Pool, error) {
 	dbConfig, err := pgxpool.ParseConfig(databaseDSN)
 	if err != nil {
 		return nil, err
 	}
 
-	conn, err := pgxpool.NewWithConfig(context.Background(), dbConfig)
+	conn, err := pgxpool.NewWithConfig(ctx, dbConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	err = conn.Ping(context.Background())
+	err = conn.Ping(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to the database: %w", err)
 	}
@@ -51,8 +51,8 @@ func (d *Database) GetSQLDB() (*sql.DB, error) {
 	return sql.Open("pgx", dsn)
 }
 
-// Migrate performs migrations using embedded SQL files
-func (d *Database) Migrate() error {
+// MigrateWithContext performs migrations using embedded SQL files with provided context
+func (d *Database) MigrateWithContext(ctx context.Context) error {
 	db, err := d.GetSQLDB()
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
@@ -70,5 +70,13 @@ func (d *Database) Migrate() error {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
+	return nil
+}
+
+// Close closes the database connection
+func (d *Database) Close() error {
+	if d.Conn != nil {
+		d.Conn.Close()
+	}
 	return nil
 }

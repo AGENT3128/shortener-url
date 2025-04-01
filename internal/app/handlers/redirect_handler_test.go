@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/AGENT3128/shortener-url/internal/app/storage/mocks"
 	"github.com/gin-gonic/gin"
@@ -12,6 +14,9 @@ import (
 )
 
 func TestRedirectHandler(t *testing.T) {
+	// base context for setup
+	ctx := context.Background()
+
 	repo := mocks.NewMockMemoryRepository()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -30,7 +35,11 @@ func TestRedirectHandler(t *testing.T) {
 	}
 
 	for shortID, originalURL := range testCases {
-		shortID, err := repo.Add(shortID, originalURL)
+		// base context for setup
+		setupCtx, setupCancel := context.WithTimeout(ctx, 5*time.Second)
+		defer setupCancel()
+
+		shortID, err := repo.Add(setupCtx, shortID, originalURL)
 		if err != nil {
 			t.Fatalf("failed to add url: %v", err)
 		}
@@ -76,8 +85,12 @@ func TestRedirectHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// context for request
+			requestCtx, requestCancel := context.WithTimeout(ctx, 2*time.Second)
+			defer requestCancel()
+
 			w := httptest.NewRecorder()
-			request := httptest.NewRequest(http.MethodGet, "/"+tt.shortID, nil)
+			request := httptest.NewRequestWithContext(requestCtx, http.MethodGet, "/"+tt.shortID, nil)
 			router.ServeHTTP(w, request)
 			result := w.Result()
 			defer result.Body.Close()

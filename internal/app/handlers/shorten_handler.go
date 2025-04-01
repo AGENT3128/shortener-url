@@ -54,7 +54,7 @@ func (h *ShortenHandler) Handler() gin.HandlerFunc {
 			return
 		}
 
-		shortID, err := h.repository.Add(helpers.GenerateShortID(), originalURL)
+		shortID, err := h.repository.Add(c.Request.Context(), helpers.GenerateShortID(), originalURL)
 		if err != nil {
 			if errors.Is(err, storage.ErrURLExists) {
 				h.logger.Info("URL already exists", zap.String("originalURL", originalURL))

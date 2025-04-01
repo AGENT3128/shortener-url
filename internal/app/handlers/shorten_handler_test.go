@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/AGENT3128/shortener-url/internal/app/storage/mocks"
 	"github.com/gin-gonic/gin"
@@ -13,6 +15,7 @@ import (
 )
 
 func TestShortenHandler(t *testing.T) {
+	ctx := context.Background()
 	repo := mocks.NewMockMemoryRepository()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -79,8 +82,12 @@ func TestShortenHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// context for request
+			requestCtx, requestCancel := context.WithTimeout(ctx, 2*time.Second)
+			defer requestCancel()
+
 			w := httptest.NewRecorder()
-			request := httptest.NewRequest(tt.request.method, tt.request.path, strings.NewReader(tt.request.body))
+			request := httptest.NewRequestWithContext(requestCtx, tt.request.method, tt.request.path, strings.NewReader(tt.request.body))
 			router.ServeHTTP(w, request)
 			result := w.Result()
 			defer result.Body.Close()
