@@ -2,9 +2,14 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
+	"github.com/AGENT3128/shortener-url/internal/migrations"
+
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 )
 
 type Database struct {
@@ -39,23 +44,30 @@ func NewConnectionPool(databaseDSN string) (*pgxpool.Pool, error) {
 	return conn, nil
 }
 
-func (d *Database) Migrate() error {
-	// Read and execute migration file
-	query := `
-		CREATE TABLE IF NOT EXISTS urls (
-		id SERIAL PRIMARY KEY,
-		short_id TEXT NOT NULL UNIQUE,
-		original_url TEXT NOT NULL,
-		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-	);
+// GetSQLDB returns a standard sql.DB from the pgx connection pool
+func (d *Database) GetSQLDB() (*sql.DB, error) {
+	dbConfig := d.Conn.Config().ConnConfig
+	dsn := stdlib.RegisterConnConfig(dbConfig)
+	return sql.Open("pgx", dsn)
+}
 
-	CREATE INDEX IF NOT EXISTS idx_urls_short_id ON urls(short_id);
-	CREATE UNIQUE INDEX IF NOT EXISTS urls_original_url_idx ON urls (original_url);
-	`
-	// Execute migration query
-	_, err := d.Conn.Exec(context.Background(), query)
+// Migrate performs migrations using embedded SQL files
+func (d *Database) Migrate() error {
+	db, err := d.GetSQLDB()
 	if err != nil {
-		return fmt.Errorf("failed to execute migration: %w", err)
+		return fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	// Set the migration file system
+	goose.SetBaseFS(migrations.GetMigrationsFS())
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		return fmt.Errorf("failed to set dialect: %w", err)
+	}
+
+	if err := goose.Up(db, migrations.MigrationsPath()); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return nil
