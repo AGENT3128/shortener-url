@@ -1,14 +1,17 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/AGENT3128/shortener-url/internal/app/config"
+	"github.com/AGENT3128/shortener-url/internal/app/db"
 	"github.com/AGENT3128/shortener-url/internal/app/handlers"
 	"github.com/AGENT3128/shortener-url/internal/app/logger"
 	"github.com/AGENT3128/shortener-url/internal/app/middleware"
+	"github.com/AGENT3128/shortener-url/internal/app/models"
 	"github.com/AGENT3128/shortener-url/internal/app/storage"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -35,15 +38,23 @@ type IHandlerFunc interface {
 type Repository interface {
 	ShortenerSet
 	ShortenerGet
+	PingDB
 }
 
 type ShortenerSet interface {
-	Add(shortID, originalURL string)
+	Add(ctx context.Context, shortID, originalURL string) (string, error)
+	AddBatch(ctx context.Context, urls []models.URL) error
 }
+
 type ShortenerGet interface {
-	GetByShortID(shortID string) (string, bool)
-	GetByOriginalURL(originalURL string) (string, bool)
+	GetByShortID(ctx context.Context, shortID string) (string, bool)
+	GetByOriginalURL(ctx context.Context, originalURL string) (string, bool)
 }
+
+type PingDB interface {
+	Ping(ctx context.Context) error
+}
+
 type Server struct {
 	httpServer *http.Server
 	router     *gin.Engine
@@ -97,8 +108,33 @@ func NewServer(opts ...Option) (*Server, error) {
 		return nil, fmt.Errorf("invalid release mode: %s", options.config.ReleaseMode)
 	}
 
+	ctx := context.Background()
+
+	var database *db.Database
+	if options.config.DatabaseDSN != "" {
+		var err error
+
+		ctxDB, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		database, err = db.NewDatabase(ctxDB, options.config.DatabaseDSN)
+		if err != nil {
+			return nil, err
+		}
+
+		ctxMigration, cancelMigration := context.WithTimeout(ctx, 1*time.Minute)
+		defer cancelMigration()
+
+		err = database.MigrateWithContext(ctxMigration)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var repo Repository
-	if options.config.FileStoragePath != "" {
+	if database != nil {
+		repo = storage.NewURLRepository(database, options.logger)
+	} else if options.config.FileStoragePath != "" {
 		var err error
 		repo, err = storage.NewFileStorage(options.config.FileStoragePath, options.logger)
 		if err != nil {
@@ -120,6 +156,8 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlers.NewShortenHandler(repo, options.config.BaseURLAddress, options.logger),
 		handlers.NewRedirectHandler(repo, options.logger),
 		handlers.NewAPIShortenHandler(repo, options.config.BaseURLAddress, options.logger),
+		handlers.NewPingHandler(repo, options.logger),
+		handlers.NewShortenBatchHandler(repo, options.config.BaseURLAddress, options.logger),
 	}
 
 	for _, handler := range handlers {
@@ -143,6 +181,10 @@ func NewServer(opts ...Option) (*Server, error) {
 
 func (s *Server) Run() error {
 	return s.httpServer.ListenAndServe()
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
 }
 
 func (s *Server) Close() error {
