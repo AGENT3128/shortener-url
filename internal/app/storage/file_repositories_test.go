@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AGENT3128/shortener-url/internal/app/models"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -62,7 +63,7 @@ func TestFileStorage(t *testing.T) {
 			_, err := repo.Add(requestCtx, tt.shortID, tt.originalURL)
 			if tt.wantError {
 				assert.Error(t, err)
-				assert.Equal(t, ErrURLExists, err)
+				assert.Equal(t, models.ErrURLExists, err)
 			} else {
 				assert.NoError(t, err)
 			}

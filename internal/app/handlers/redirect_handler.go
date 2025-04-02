@@ -9,18 +9,18 @@ import (
 	"go.uber.org/zap"
 )
 
-// URLShortGetter describes the behavior for retrieving original URL by short ID
-type URLShortGetter interface {
+// urlShortGetter describes the behavior for retrieving original URL by short ID
+type urlShortGetter interface {
 	GetByShortID(ctx context.Context, shortID string) (string, bool)
 }
 
 // RedirectHandler handles redirects by short URL
 type RedirectHandler struct {
-	repository URLShortGetter
+	repository urlShortGetter
 	logger     *zap.Logger
 }
 
-func NewRedirectHandler(repo URLShortGetter, logger *zap.Logger) *RedirectHandler {
+func NewRedirectHandler(repo urlShortGetter, logger *zap.Logger) *RedirectHandler {
 	logger = logger.With(zap.String("handler", "RedirectHandler"))
 	return &RedirectHandler{
 		repository: repo,

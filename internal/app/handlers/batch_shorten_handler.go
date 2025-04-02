@@ -1,16 +1,28 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/AGENT3128/shortener-url/internal/app/helpers"
-	"github.com/AGENT3128/shortener-url/internal/app/storage"
+	"github.com/AGENT3128/shortener-url/internal/app/models"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
+
+// BatchShortenI interface for batch operations
+type BatchShortenI interface {
+	AddBatchSetter
+	URLOriginalGetter
+}
+
+// AddBatchSetter interface for batch operations
+type AddBatchSetter interface {
+	AddBatch(ctx context.Context, urls []models.URL) error
+}
 
 // ShortenBatchRequest represents an item in the batch shortening request
 type ShortenBatchRequest struct {
@@ -26,13 +38,13 @@ type ShortenBatchResponse struct {
 
 // ShortenBatchHandler handles batch creation of short URLs
 type ShortenBatchHandler struct {
-	repository URLRepository
+	repository BatchShortenI
 	baseURL    string
 	logger     *zap.Logger
 }
 
 // NewShortenBatchHandler creates a new instance of ShortenBatchHandler
-func NewShortenBatchHandler(repo URLRepository, baseURL string, logger *zap.Logger) *ShortenBatchHandler {
+func NewShortenBatchHandler(repo BatchShortenI, baseURL string, logger *zap.Logger) *ShortenBatchHandler {
 	logger = logger.With(zap.String("handler", "ShortenBatchHandler"))
 	return &ShortenBatchHandler{
 		repository: repo,
@@ -68,14 +80,13 @@ func (h *ShortenBatchHandler) Handler() gin.HandlerFunc {
 		}
 
 		if len(requests) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Original URL is empty"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
 			return
 		}
 
 		// prepare data
-		var urls []storage.URL
+		var urls []models.URL
 		response := make([]ShortenBatchResponse, 0, len(requests))
-		txRepo, supportsTx := h.repository.(TransactionSupport)
 
 		// process requests
 		for _, request := range requests {
@@ -86,15 +97,10 @@ func (h *ShortenBatchHandler) Handler() gin.HandlerFunc {
 			shortID, exists := h.repository.GetByOriginalURL(c.Request.Context(), request.OriginalURL)
 			if !exists {
 				shortID = helpers.GenerateShortID()
-				// for DB, collect batch, for other storages add immediately
-				if supportsTx {
-					urls = append(urls, storage.URL{
-						ShortID:     shortID,
-						OriginalURL: request.OriginalURL,
-					})
-				} else {
-					h.repository.Add(c.Request.Context(), shortID, request.OriginalURL)
-				}
+				urls = append(urls, models.URL{
+					ShortID:     shortID,
+					OriginalURL: request.OriginalURL,
+				})
 			}
 
 			response = append(response, ShortenBatchResponse{
@@ -104,8 +110,8 @@ func (h *ShortenBatchHandler) Handler() gin.HandlerFunc {
 		}
 
 		// batch adding for DB
-		if supportsTx && len(urls) > 0 {
-			if err := txRepo.AddBatch(c.Request.Context(), urls); err != nil {
+		if len(urls) > 0 {
+			if err := h.repository.AddBatch(c.Request.Context(), urls); err != nil {
 				h.logger.Error("failed to add batch", zap.Error(err))
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 				return

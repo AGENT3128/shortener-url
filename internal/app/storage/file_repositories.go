@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/AGENT3128/shortener-url/internal/app/models"
 	"go.uber.org/zap"
 )
 
@@ -56,7 +57,7 @@ func (f *FileStorage) Add(ctx context.Context, shortID, originalURL string) (str
 	// before adding, check if the URL already exists (check by original URL)
 	if _, ok := f.GetByOriginalURL(ctx, originalURL); ok {
 		f.logger.Info(method, zap.String("originalURL", originalURL), zap.String("shortID", shortID), zap.Bool("exists", ok))
-		return shortID, ErrURLExists
+		return shortID, models.ErrURLExists
 	}
 
 	f.mu.Lock()
@@ -101,6 +102,29 @@ func (f *FileStorage) GetByOriginalURL(ctx context.Context, originalURL string) 
 		}
 	}
 	return "", false
+}
+
+func (f *FileStorage) AddBatch(ctx context.Context, urls []models.URL) error {
+	const method = "AddBatch"
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	for _, url := range urls {
+		f.lastUUID++
+		uuid := strconv.Itoa(f.lastUUID)
+
+		f.urls[url.ShortID] = URLData{
+			OriginalURL: url.OriginalURL,
+			UUID:        uuid,
+		}
+	}
+
+	if err := f.saveToFile(); err != nil {
+		f.logger.Error(method, zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func (f *FileStorage) loadFromFile() error {
@@ -169,4 +193,9 @@ func (f *FileStorage) saveToFile() error {
 
 func (f *FileStorage) Close() error {
 	return f.file.Close()
+}
+
+func (f *FileStorage) Ping(ctx context.Context) error {
+	// not needed for file storage
+	return nil
 }

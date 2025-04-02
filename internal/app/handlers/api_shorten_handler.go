@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,10 +9,26 @@ import (
 	"net/http"
 
 	"github.com/AGENT3128/shortener-url/internal/app/helpers"
-	"github.com/AGENT3128/shortener-url/internal/app/storage"
+	"github.com/AGENT3128/shortener-url/internal/app/models"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
+
+// URLOriginalGetter describes the behavior for retrieving short URL by original URL
+type URLOriginalGetter interface {
+	GetByOriginalURL(ctx context.Context, originalURL string) (string, bool)
+}
+
+// URLSaver describes the behavior for saving short URL by original URL
+type URLSaver interface {
+	Add(ctx context.Context, shortID, originalURL string) (string, error)
+}
+
+// URLRepository combines URL getting and saving capabilities
+type URLRepository interface {
+	URLOriginalGetter
+	URLSaver
+}
 
 // ShortenRequest represents the request for shortening a URL
 type ShortenRequest struct {
@@ -74,7 +91,7 @@ func (h *APIShortenHandler) Handler() gin.HandlerFunc {
 
 		shortID, err := h.repository.Add(c.Request.Context(), helpers.GenerateShortID(), request.URL)
 		if err != nil {
-			if errors.Is(err, storage.ErrURLExists) {
+			if errors.Is(err, models.ErrURLExists) {
 				h.logger.Info("URL already exists", zap.String("originalURL", request.URL))
 				c.JSON(http.StatusConflict, ShortenResponse{Result: fmt.Sprintf("%s/%s", h.baseURL, shortID)})
 				return

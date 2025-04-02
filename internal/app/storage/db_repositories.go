@@ -6,16 +6,11 @@ import (
 	"time"
 
 	"github.com/AGENT3128/shortener-url/internal/app/db"
+	"github.com/AGENT3128/shortener-url/internal/app/models"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
 )
-
-type URL struct {
-	ShortID     string    `json:"short_id"`
-	OriginalURL string    `json:"original_url"`
-	CreatedAt   time.Time `json:"created_at"`
-}
 
 type URLRepository struct {
 	db        *db.Database
@@ -54,7 +49,7 @@ func (r *URLRepository) Add(ctx context.Context, shortID, originalURL string) (s
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			// get existing shortID
 			if existingShortID, exists := r.GetByOriginalURL(ctx, originalURL); exists {
-				return existingShortID, ErrURLExists
+				return existingShortID, models.ErrURLExists
 			}
 		}
 		r.logger.Error("Failed to add URL to database", zap.Error(err))
@@ -72,7 +67,7 @@ func (r *URLRepository) GetByShortID(ctx context.Context, shortID string) (strin
 		WHERE short_id = $1
 	`
 
-	var url URL
+	var url models.URL
 	err := r.db.Conn.QueryRow(
 		ctx,
 		sql,
@@ -93,7 +88,7 @@ func (r *URLRepository) GetByOriginalURL(ctx context.Context, originalURL string
 		FROM ` + r.tableName + `
 		WHERE original_url = $1
 	`
-	var url URL
+	var url models.URL
 	err := r.db.Conn.QueryRow(
 		ctx,
 		sql,
@@ -107,7 +102,7 @@ func (r *URLRepository) GetByOriginalURL(ctx context.Context, originalURL string
 	return url.ShortID, true
 }
 
-func (r *URLRepository) AddBatch(ctx context.Context, urls []URL) error {
+func (r *URLRepository) AddBatch(ctx context.Context, urls []models.URL) error {
 	r.logger.Debug("Adding batch of URLs to database", zap.Any("urls", urls))
 	sql := `
 		INSERT INTO ` + r.tableName + ` (short_id, original_url, created_at)
@@ -143,4 +138,8 @@ func (r *URLRepository) Close() error {
 		return r.db.Close()
 	}
 	return nil
+}
+
+func (r *URLRepository) Ping(ctx context.Context) error {
+	return r.db.Conn.Ping(ctx)
 }

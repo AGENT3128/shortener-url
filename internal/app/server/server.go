@@ -11,6 +11,7 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/app/handlers"
 	"github.com/AGENT3128/shortener-url/internal/app/logger"
 	"github.com/AGENT3128/shortener-url/internal/app/middleware"
+	"github.com/AGENT3128/shortener-url/internal/app/models"
 	"github.com/AGENT3128/shortener-url/internal/app/storage"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -37,15 +38,23 @@ type IHandlerFunc interface {
 type Repository interface {
 	ShortenerSet
 	ShortenerGet
+	PingDB
 }
 
 type ShortenerSet interface {
 	Add(ctx context.Context, shortID, originalURL string) (string, error)
+	AddBatch(ctx context.Context, urls []models.URL) error
 }
+
 type ShortenerGet interface {
 	GetByShortID(ctx context.Context, shortID string) (string, bool)
 	GetByOriginalURL(ctx context.Context, originalURL string) (string, bool)
 }
+
+type PingDB interface {
+	Ping(ctx context.Context) error
+}
+
 type Server struct {
 	httpServer *http.Server
 	router     *gin.Engine
@@ -147,7 +156,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlers.NewShortenHandler(repo, options.config.BaseURLAddress, options.logger),
 		handlers.NewRedirectHandler(repo, options.logger),
 		handlers.NewAPIShortenHandler(repo, options.config.BaseURLAddress, options.logger),
-		handlers.NewPingHandler(database, options.logger),
+		handlers.NewPingHandler(repo, options.logger),
 		handlers.NewShortenBatchHandler(repo, options.config.BaseURLAddress, options.logger),
 	}
 

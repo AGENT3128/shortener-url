@@ -2,10 +2,10 @@ package mocks
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/AGENT3128/shortener-url/internal/app/config"
+	"github.com/AGENT3128/shortener-url/internal/app/models"
 )
 
 // TestConfig provides a common configuration for tests
@@ -16,23 +16,8 @@ var TestConfig = &config.Config{
 	LogLevel:       "info",
 }
 
-// ErrURLExists is the error returned when trying to add a URL that already exists
-type urlExistsError struct {
-	msg string
-}
-
-func (e *urlExistsError) Error() string {
-	return e.msg
-}
-
-// Is implements errors.Is interface for compatibility with storage.ErrURLExists
-func (e *urlExistsError) Is(target error) bool {
-	// Check if target error message is "url already exists"
-	return target.Error() == "url already exists" || errors.Is(target, &urlExistsError{})
-}
-
-// ErrURLExists is the singleton instance
-var ErrURLExists = &urlExistsError{msg: "url already exists"}
+// ErrURLExists is re-exported from models
+var ErrURLExists = models.ErrURLExists
 
 // MockMemoryRepository is a mock implementation of URLRepository for testing
 type MockMemoryRepository struct {
@@ -79,4 +64,15 @@ func (m *MockMemoryRepository) GetByOriginalURL(ctx context.Context, originalURL
 		}
 	}
 	return "", false
+}
+
+func (m *MockMemoryRepository) AddBatch(ctx context.Context, urls []models.URL) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, url := range urls {
+		m.urls[url.ShortID] = url.OriginalURL
+	}
+
+	return nil
 }

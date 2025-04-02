@@ -1,24 +1,29 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/AGENT3128/shortener-url/internal/app/db"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
-// PingHandler handles the ping database connection request
-type PingHandler struct {
-	db     *db.Database
-	logger *zap.Logger
+// pingI describes the behavior for pinging a database
+type pingI interface {
+	Ping(ctx context.Context) error
 }
 
-func NewPingHandler(db *db.Database, logger *zap.Logger) *PingHandler {
+// PingHandler handles the ping database connection request
+type PingHandler struct {
+	repository pingI
+	logger     *zap.Logger
+}
+
+func NewPingHandler(repository pingI, logger *zap.Logger) *PingHandler {
 	logger = logger.With(zap.String("handler", "PingHandler"))
 	return &PingHandler{
-		db:     db,
-		logger: logger,
+		repository: repository,
+		logger:     logger,
 	}
 }
 
@@ -32,7 +37,7 @@ func (h *PingHandler) Method() string {
 
 func (h *PingHandler) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := h.db.Conn.Ping(c.Request.Context()); err != nil {
+		if err := h.repository.Ping(c.Request.Context()); err != nil {
 			h.logger.Error("Failed to ping database", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to ping database"})
 			return

@@ -1,25 +1,31 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
 
 	"github.com/AGENT3128/shortener-url/internal/app/helpers"
-	"github.com/AGENT3128/shortener-url/internal/app/storage"
+	"github.com/AGENT3128/shortener-url/internal/app/models"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
+// shortenI describes the behavior for shortening a URL
+type shortenI interface {
+	Add(ctx context.Context, shortID, originalURL string) (string, error)
+}
+
 // ShortenHandler handles the creation of short URLs through plain text endpoint
 type ShortenHandler struct {
-	repository URLRepository
+	repository shortenI
 	baseURL    string
 	logger     *zap.Logger
 }
 
 // NewShortenHandler creates a new instance of ShortenHandler
-func NewShortenHandler(repo URLRepository, baseURL string, logger *zap.Logger) *ShortenHandler {
+func NewShortenHandler(repo shortenI, baseURL string, logger *zap.Logger) *ShortenHandler {
 	logger = logger.With(zap.String("handler", "ShortenHandler"))
 	return &ShortenHandler{
 		repository: repo,
@@ -56,7 +62,7 @@ func (h *ShortenHandler) Handler() gin.HandlerFunc {
 
 		shortID, err := h.repository.Add(c.Request.Context(), helpers.GenerateShortID(), originalURL)
 		if err != nil {
-			if errors.Is(err, storage.ErrURLExists) {
+			if errors.Is(err, models.ErrURLExists) {
 				h.logger.Info("URL already exists", zap.String("originalURL", originalURL))
 				c.String(http.StatusConflict, "%s/%s", h.baseURL, shortID)
 				return

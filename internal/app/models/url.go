@@ -1,4 +1,15 @@
-package storage
+package models
+
+import (
+	"time"
+)
+
+// URL represents a URL entity in the storage
+type URL struct {
+	ShortID     string    `json:"short_id"`
+	OriginalURL string    `json:"original_url"`
+	CreatedAt   time.Time `json:"created_at"`
+}
 
 // URLExistsError represents an error when a URL already exists
 type URLExistsError struct {
