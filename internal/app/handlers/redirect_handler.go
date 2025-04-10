@@ -38,6 +38,11 @@ func (h *RedirectHandler) Method() string {
 
 func (h *RedirectHandler) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		_, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
 		shortID := strings.TrimPrefix(c.Request.URL.Path, "/")
 		originalURL, ok := h.repository.GetByShortID(c.Request.Context(), shortID)
 		h.logger.Info("get original URL", zap.String("shortID", shortID), zap.String("originalURL", originalURL), zap.Bool("exists", ok))

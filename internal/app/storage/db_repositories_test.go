@@ -1,11 +1,13 @@
 package storage
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/AGENT3128/shortener-url/internal/app/storage/mocks"
-
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,6 +16,9 @@ func TestMockDBStorage(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockRepository(ctrl)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	userID := uuid.New().String()
 
 	tests := []struct {
 		name        string
@@ -39,23 +44,23 @@ func TestMockDBStorage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo.EXPECT().Add(tt.shortID, tt.originalURL)
+			mockRepo.EXPECT().Add(ctx, userID, tt.shortID, tt.originalURL)
 
 			mockRepo.EXPECT().
-				GetByShortID(tt.shortID).
+				GetByShortID(ctx, tt.shortID).
 				Return(tt.originalURL, true)
 
 			mockRepo.EXPECT().
-				GetByOriginalURL(tt.originalURL).
+				GetByOriginalURL(ctx, tt.originalURL).
 				Return(tt.shortID, true)
 
-			mockRepo.Add(tt.shortID, tt.originalURL)
+			mockRepo.Add(ctx, userID, tt.shortID, tt.originalURL)
 
-			originalURL, ok := mockRepo.GetByShortID(tt.shortID)
+			originalURL, ok := mockRepo.GetByShortID(ctx, tt.shortID)
 			assert.True(t, ok)
 			assert.Equal(t, tt.originalURL, originalURL)
 
-			shortID, ok := mockRepo.GetByOriginalURL(tt.originalURL)
+			shortID, ok := mockRepo.GetByOriginalURL(ctx, tt.originalURL)
 			assert.True(t, ok)
 			assert.Equal(t, tt.shortID, shortID)
 		})

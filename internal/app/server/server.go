@@ -39,11 +39,12 @@ type Repository interface {
 	ShortenerSet
 	ShortenerGet
 	PingDB
+	GetUserURLs
 }
 
 type ShortenerSet interface {
-	Add(ctx context.Context, shortID, originalURL string) (string, error)
-	AddBatch(ctx context.Context, urls []models.URL) error
+	Add(ctx context.Context, userID, shortID, originalURL string) (string, error)
+	AddBatch(ctx context.Context, userID string, urls []models.URL) error
 }
 
 type ShortenerGet interface {
@@ -53,6 +54,10 @@ type ShortenerGet interface {
 
 type PingDB interface {
 	Ping(ctx context.Context) error
+}
+
+type GetUserURLs interface {
+	GetUserURLs(ctx context.Context, userID string) ([]models.URL, error)
 }
 
 type Server struct {
@@ -147,9 +152,10 @@ func NewServer(opts ...Option) (*Server, error) {
 	// Create router and setup middleware
 	router := gin.Default()
 	// router.Use(gin.Logger())
-	router.Use(middleware.HandlerLogger())
 	router.Use(gin.Recovery())
+	router.Use(middleware.HandlerLogger())
 	router.Use(middleware.GzipMiddleware())
+	router.Use(middleware.AuthMiddleware())
 
 	// Setup handlers
 	handlers := []IHandler{
@@ -158,6 +164,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlers.NewAPIShortenHandler(repo, options.config.BaseURLAddress, options.logger),
 		handlers.NewPingHandler(repo, options.logger),
 		handlers.NewShortenBatchHandler(repo, options.config.BaseURLAddress, options.logger),
+		handlers.NewUserURLsHandler(repo, options.config.BaseURLAddress, options.logger),
 	}
 
 	for _, handler := range handlers {

@@ -9,6 +9,7 @@ type URL struct {
 	ShortID     string    `json:"short_id"`
 	OriginalURL string    `json:"original_url"`
 	CreatedAt   time.Time `json:"created_at"`
+	UserID      string    `json:"user_id"`
 }
 
 // URLExistsError represents an error when a URL already exists

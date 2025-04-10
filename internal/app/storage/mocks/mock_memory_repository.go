@@ -22,25 +22,29 @@ var ErrURLExists = models.ErrURLExists
 // MockMemoryRepository is a mock implementation of URLRepository for testing
 type MockMemoryRepository struct {
 	mu   sync.RWMutex
-	urls map[string]string
+	urls map[string]models.URL
 }
 
 // NewMockMemoryRepository creates a new instance of MockMemoryRepository
 func NewMockMemoryRepository() *MockMemoryRepository {
 	return &MockMemoryRepository{
-		urls: make(map[string]string),
+		urls: make(map[string]models.URL),
 	}
 }
 
 // Add adds a new URL to the repository
-func (m *MockMemoryRepository) Add(ctx context.Context, shortID, originalURL string) (string, error) {
+func (m *MockMemoryRepository) Add(ctx context.Context, userID, shortID, originalURL string) (string, error) {
 	if _, ok := m.GetByOriginalURL(ctx, originalURL); ok {
 		return shortID, ErrURLExists
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.urls[shortID] = originalURL
+	m.urls[shortID] = models.URL{
+		ShortID:     shortID,
+		OriginalURL: originalURL,
+		UserID:      userID,
+	}
 	return shortID, nil
 }
 
@@ -49,8 +53,8 @@ func (m *MockMemoryRepository) GetByShortID(ctx context.Context, shortID string)
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	originalURL, ok := m.urls[shortID]
-	return originalURL, ok
+	url, ok := m.urls[shortID]
+	return url.OriginalURL, ok
 }
 
 // GetByOriginalURL retrieves the short ID by original URL
@@ -59,20 +63,37 @@ func (m *MockMemoryRepository) GetByOriginalURL(ctx context.Context, originalURL
 	defer m.mu.RUnlock()
 
 	for shortID, url := range m.urls {
-		if url == originalURL {
+		if url.OriginalURL == originalURL {
 			return shortID, true
 		}
 	}
 	return "", false
 }
 
-func (m *MockMemoryRepository) AddBatch(ctx context.Context, urls []models.URL) error {
+func (m *MockMemoryRepository) AddBatch(ctx context.Context, userID string, urls []models.URL) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	for _, url := range urls {
-		m.urls[url.ShortID] = url.OriginalURL
+		m.urls[url.ShortID] = models.URL{
+			ShortID:     url.ShortID,
+			OriginalURL: url.OriginalURL,
+			UserID:      userID,
+		}
 	}
 
 	return nil
+}
+
+func (m *MockMemoryRepository) GetUserURLs(ctx context.Context, userID string) ([]models.URL, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	urls := make([]models.URL, 0)
+	for _, url := range m.urls {
+		if url.UserID == userID {
+			urls = append(urls, url)
+		}
+	}
+	return urls, nil
 }

@@ -27,6 +27,10 @@ func TestAPIShortenHandler(t *testing.T) {
 	shortenHandler := NewAPIShortenHandler(repo, mocks.TestConfig.BaseURLAddress, logger)
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
+	router.Use(func(c *gin.Context) {
+		c.Set("userID", "test-user")
+		c.Next()
+	})
 	router.POST("/api/shorten", shortenHandler.Handler())
 
 	type want struct {
