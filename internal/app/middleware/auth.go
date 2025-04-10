@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	TOKEN_EXPIRES = 1 * time.Hour
-	SECRET_KEY    = "NuQu82Q2"
-	AUTH_COOKIE   = "Auth"
+	tokenExpires = 1 * time.Hour
+	secretKey    = "NuQu82Q2"
+	authCookie   = "Auth"
 )
 
 type Claims struct {
@@ -26,7 +26,7 @@ type Claims struct {
 // AuthMiddleware
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token, err := c.Cookie(AUTH_COOKIE)
+		token, err := c.Cookie(authCookie)
 		if errors.Is(err, http.ErrNoCookie) {
 			logger.Log.Info("No cookie found, generating new token")
 			// generate token and set cookie
@@ -39,7 +39,7 @@ func AuthMiddleware() gin.HandlerFunc {
 				return
 			}
 
-			c.SetCookie(AUTH_COOKIE, tokenString, int(TOKEN_EXPIRES.Seconds()), "/", "", false, true)
+			c.SetCookie(authCookie, tokenString, int(tokenExpires.Seconds()), "/", "", false, true)
 			c.Set("userID", userID)
 			c.Next()
 			return
@@ -66,12 +66,12 @@ func AuthMiddleware() gin.HandlerFunc {
 func generateToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKEN_EXPIRES)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenExpires)),
 		},
 		UserID: userID,
 	})
 
-	tokenString, err := token.SignedString([]byte(SECRET_KEY))
+	tokenString, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		return "", err
 	}
@@ -82,7 +82,7 @@ func generateToken(userID string) (string, error) {
 func getUserID(tokenString string) (string, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(SECRET_KEY), nil
+		return []byte(secretKey), nil
 	})
 	if err != nil {
 		return "", err
