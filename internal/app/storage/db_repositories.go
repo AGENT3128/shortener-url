@@ -29,11 +29,11 @@ func (r *URLRepository) WithTableName(name string) *URLRepository {
 	return r
 }
 
-func (r *URLRepository) Add(ctx context.Context, shortID, originalURL string) (string, error) {
+func (r *URLRepository) Add(ctx context.Context, userID, shortID, originalURL string) (string, error) {
 	r.logger.Debug("Adding URL to database", zap.String("short_id", shortID), zap.String("original_url", originalURL))
 	sql := `
-		INSERT INTO ` + r.tableName + ` (short_id, original_url, created_at)
-		VALUES ($1, $2, $3)
+		INSERT INTO ` + r.tableName + ` (short_id, original_url, created_at, user_id)
+		VALUES ($1, $2, $3, $4)
 	`
 
 	_, err := r.db.Conn.Exec(
@@ -42,6 +42,7 @@ func (r *URLRepository) Add(ctx context.Context, shortID, originalURL string) (s
 		shortID,
 		originalURL,
 		time.Now(),
+		userID,
 	)
 
 	if err != nil {
@@ -102,11 +103,11 @@ func (r *URLRepository) GetByOriginalURL(ctx context.Context, originalURL string
 	return url.ShortID, true
 }
 
-func (r *URLRepository) AddBatch(ctx context.Context, urls []models.URL) error {
+func (r *URLRepository) AddBatch(ctx context.Context, userID string, urls []models.URL) error {
 	r.logger.Debug("Adding batch of URLs to database", zap.Any("urls", urls))
 	sql := `
-		INSERT INTO ` + r.tableName + ` (short_id, original_url, created_at)
-		VALUES ($1, $2, $3)
+		INSERT INTO ` + r.tableName + ` (short_id, original_url, created_at, user_id)
+		VALUES ($1, $2, $3, $4)
 	`
 	tx, err := r.db.Conn.Begin(ctx)
 	if err != nil {
@@ -117,7 +118,7 @@ func (r *URLRepository) AddBatch(ctx context.Context, urls []models.URL) error {
 
 	for _, url := range urls {
 		r.logger.Info("Adding URL to database", zap.Any("url", url))
-		_, err := tx.Exec(ctx, sql, url.ShortID, url.OriginalURL, time.Now())
+		_, err := tx.Exec(ctx, sql, url.ShortID, url.OriginalURL, time.Now(), userID)
 		if err != nil {
 			r.logger.Error("Failed to add URL to database", zap.Error(err))
 			return err
@@ -142,4 +143,32 @@ func (r *URLRepository) Close() error {
 
 func (r *URLRepository) Ping(ctx context.Context) error {
 	return r.db.Conn.Ping(ctx)
+}
+
+func (r *URLRepository) GetUserURLs(ctx context.Context, userID string) ([]models.URL, error) {
+	const method = "GetUserURLs"
+	sql := `
+		SELECT short_id, original_url
+		FROM ` + r.tableName + `
+		WHERE user_id = $1
+	`
+	rows, err := r.db.Conn.Query(ctx, sql, userID)
+	if err != nil {
+		r.logger.Error("Failed to get user URLs from database", zap.Error(err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	urls := make([]models.URL, 0)
+	for rows.Next() {
+		var url models.URL
+		err := rows.Scan(&url.ShortID, &url.OriginalURL)
+		if err != nil {
+			r.logger.Error("Failed to scan user URL", zap.Error(err))
+			continue
+		}
+		urls = append(urls, url)
+	}
+	r.logger.Debug(method, zap.String("userID", userID), zap.Int("count", len(urls)))
+	return urls, nil
 }

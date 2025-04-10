@@ -23,6 +23,7 @@ type FileStorage struct {
 type URLData struct {
 	OriginalURL string
 	UUID        string
+	UserID      string
 }
 
 type URLRecord struct {
@@ -52,7 +53,7 @@ func NewFileStorage(path string, logger *zap.Logger) (*FileStorage, error) {
 	return fs, nil
 }
 
-func (f *FileStorage) Add(ctx context.Context, shortID, originalURL string) (string, error) {
+func (f *FileStorage) Add(ctx context.Context, userID, shortID, originalURL string) (string, error) {
 	const method = "Add"
 	// before adding, check if the URL already exists (check by original URL)
 	if _, ok := f.GetByOriginalURL(ctx, originalURL); ok {
@@ -69,6 +70,7 @@ func (f *FileStorage) Add(ctx context.Context, shortID, originalURL string) (str
 	f.urls[shortID] = URLData{
 		OriginalURL: originalURL,
 		UUID:        uuid,
+		UserID:      userID,
 	}
 
 	if err := f.saveToFile(); err != nil {
@@ -104,7 +106,7 @@ func (f *FileStorage) GetByOriginalURL(ctx context.Context, originalURL string) 
 	return "", false
 }
 
-func (f *FileStorage) AddBatch(ctx context.Context, urls []models.URL) error {
+func (f *FileStorage) AddBatch(ctx context.Context, userID string, urls []models.URL) error {
 	const method = "AddBatch"
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -116,6 +118,7 @@ func (f *FileStorage) AddBatch(ctx context.Context, urls []models.URL) error {
 		f.urls[url.ShortID] = URLData{
 			OriginalURL: url.OriginalURL,
 			UUID:        uuid,
+			UserID:      userID,
 		}
 	}
 
@@ -198,4 +201,19 @@ func (f *FileStorage) Close() error {
 func (f *FileStorage) Ping(ctx context.Context) error {
 	// not needed for file storage
 	return nil
+}
+
+func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) ([]models.URL, error) {
+	const method = "GetUserURLs"
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	urls := make([]models.URL, 0)
+	for shortURL, urlData := range f.urls {
+		if urlData.UserID == userID {
+			urls = append(urls, models.URL{ShortID: shortURL, OriginalURL: urlData.OriginalURL})
+		}
+	}
+	f.logger.Info(method, zap.String("userID", userID), zap.Int("count", len(urls)))
+	return urls, nil
 }

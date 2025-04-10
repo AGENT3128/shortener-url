@@ -5,8 +5,10 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
+	models "github.com/AGENT3128/shortener-url/internal/app/models"
 	gin "github.com/gin-gonic/gin"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -211,48 +213,91 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockRepository) Add(shortID, originalURL string) (string, error) {
+func (m *MockRepository) Add(ctx context.Context, userID, shortID, originalURL string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Add", shortID, originalURL)
+	ret := m.ctrl.Call(m, "Add", ctx, userID, shortID, originalURL)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockRepositoryMockRecorder) Add(shortID, originalURL interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Add(ctx, userID, shortID, originalURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockRepository)(nil).Add), shortID, originalURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockRepository)(nil).Add), ctx, userID, shortID, originalURL)
+}
+
+// AddBatch mocks base method.
+func (m *MockRepository) AddBatch(ctx context.Context, userID string, urls []models.URL) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddBatch", ctx, userID, urls)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddBatch indicates an expected call of AddBatch.
+func (mr *MockRepositoryMockRecorder) AddBatch(ctx, userID, urls interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBatch", reflect.TypeOf((*MockRepository)(nil).AddBatch), ctx, userID, urls)
 }
 
 // GetByOriginalURL mocks base method.
-func (m *MockRepository) GetByOriginalURL(originalURL string) (string, bool) {
+func (m *MockRepository) GetByOriginalURL(ctx context.Context, originalURL string) (string, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByOriginalURL", originalURL)
+	ret := m.ctrl.Call(m, "GetByOriginalURL", ctx, originalURL)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
 // GetByOriginalURL indicates an expected call of GetByOriginalURL.
-func (mr *MockRepositoryMockRecorder) GetByOriginalURL(originalURL interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetByOriginalURL(ctx, originalURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByOriginalURL", reflect.TypeOf((*MockRepository)(nil).GetByOriginalURL), originalURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByOriginalURL", reflect.TypeOf((*MockRepository)(nil).GetByOriginalURL), ctx, originalURL)
 }
 
 // GetByShortID mocks base method.
-func (m *MockRepository) GetByShortID(shortID string) (string, bool) {
+func (m *MockRepository) GetByShortID(ctx context.Context, shortID string) (string, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByShortID", shortID)
+	ret := m.ctrl.Call(m, "GetByShortID", ctx, shortID)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
 // GetByShortID indicates an expected call of GetByShortID.
-func (mr *MockRepositoryMockRecorder) GetByShortID(shortID interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetByShortID(ctx, shortID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByShortID", reflect.TypeOf((*MockRepository)(nil).GetByShortID), shortID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByShortID", reflect.TypeOf((*MockRepository)(nil).GetByShortID), ctx, shortID)
+}
+
+// GetUserURLs mocks base method.
+func (m *MockRepository) GetUserURLs(ctx context.Context, userID string) ([]models.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserURLs", ctx, userID)
+	ret0, _ := ret[0].([]models.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserURLs indicates an expected call of GetUserURLs.
+func (mr *MockRepositoryMockRecorder) GetUserURLs(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserURLs", reflect.TypeOf((*MockRepository)(nil).GetUserURLs), ctx, userID)
+}
+
+// Ping mocks base method.
+func (m *MockRepository) Ping(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Ping", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Ping indicates an expected call of Ping.
+func (mr *MockRepositoryMockRecorder) Ping(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockRepository)(nil).Ping), ctx)
 }
 
 // MockShortenerSet is a mock of ShortenerSet interface.
@@ -279,18 +324,32 @@ func (m *MockShortenerSet) EXPECT() *MockShortenerSetMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockShortenerSet) Add(shortID, originalURL string) (string, error) {
+func (m *MockShortenerSet) Add(ctx context.Context, userID, shortID, originalURL string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Add", shortID, originalURL)
+	ret := m.ctrl.Call(m, "Add", ctx, userID, shortID, originalURL)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockShortenerSetMockRecorder) Add(shortID, originalURL interface{}) *gomock.Call {
+func (mr *MockShortenerSetMockRecorder) Add(ctx, userID, shortID, originalURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockShortenerSet)(nil).Add), shortID, originalURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockShortenerSet)(nil).Add), ctx, userID, shortID, originalURL)
+}
+
+// AddBatch mocks base method.
+func (m *MockShortenerSet) AddBatch(ctx context.Context, userID string, urls []models.URL) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddBatch", ctx, userID, urls)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddBatch indicates an expected call of AddBatch.
+func (mr *MockShortenerSetMockRecorder) AddBatch(ctx, userID, urls interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBatch", reflect.TypeOf((*MockShortenerSet)(nil).AddBatch), ctx, userID, urls)
 }
 
 // MockShortenerGet is a mock of ShortenerGet interface.
@@ -317,31 +376,106 @@ func (m *MockShortenerGet) EXPECT() *MockShortenerGetMockRecorder {
 }
 
 // GetByOriginalURL mocks base method.
-func (m *MockShortenerGet) GetByOriginalURL(originalURL string) (string, bool) {
+func (m *MockShortenerGet) GetByOriginalURL(ctx context.Context, originalURL string) (string, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByOriginalURL", originalURL)
+	ret := m.ctrl.Call(m, "GetByOriginalURL", ctx, originalURL)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
 // GetByOriginalURL indicates an expected call of GetByOriginalURL.
-func (mr *MockShortenerGetMockRecorder) GetByOriginalURL(originalURL interface{}) *gomock.Call {
+func (mr *MockShortenerGetMockRecorder) GetByOriginalURL(ctx, originalURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByOriginalURL", reflect.TypeOf((*MockShortenerGet)(nil).GetByOriginalURL), originalURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByOriginalURL", reflect.TypeOf((*MockShortenerGet)(nil).GetByOriginalURL), ctx, originalURL)
 }
 
 // GetByShortID mocks base method.
-func (m *MockShortenerGet) GetByShortID(shortID string) (string, bool) {
+func (m *MockShortenerGet) GetByShortID(ctx context.Context, shortID string) (string, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByShortID", shortID)
+	ret := m.ctrl.Call(m, "GetByShortID", ctx, shortID)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
 // GetByShortID indicates an expected call of GetByShortID.
-func (mr *MockShortenerGetMockRecorder) GetByShortID(shortID interface{}) *gomock.Call {
+func (mr *MockShortenerGetMockRecorder) GetByShortID(ctx, shortID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByShortID", reflect.TypeOf((*MockShortenerGet)(nil).GetByShortID), shortID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByShortID", reflect.TypeOf((*MockShortenerGet)(nil).GetByShortID), ctx, shortID)
+}
+
+// MockPingDB is a mock of PingDB interface.
+type MockPingDB struct {
+	ctrl     *gomock.Controller
+	recorder *MockPingDBMockRecorder
+}
+
+// MockPingDBMockRecorder is the mock recorder for MockPingDB.
+type MockPingDBMockRecorder struct {
+	mock *MockPingDB
+}
+
+// NewMockPingDB creates a new mock instance.
+func NewMockPingDB(ctrl *gomock.Controller) *MockPingDB {
+	mock := &MockPingDB{ctrl: ctrl}
+	mock.recorder = &MockPingDBMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPingDB) EXPECT() *MockPingDBMockRecorder {
+	return m.recorder
+}
+
+// Ping mocks base method.
+func (m *MockPingDB) Ping(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Ping", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Ping indicates an expected call of Ping.
+func (mr *MockPingDBMockRecorder) Ping(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockPingDB)(nil).Ping), ctx)
+}
+
+// MockGetUserURLs is a mock of GetUserURLs interface.
+type MockGetUserURLs struct {
+	ctrl     *gomock.Controller
+	recorder *MockGetUserURLsMockRecorder
+}
+
+// MockGetUserURLsMockRecorder is the mock recorder for MockGetUserURLs.
+type MockGetUserURLsMockRecorder struct {
+	mock *MockGetUserURLs
+}
+
+// NewMockGetUserURLs creates a new mock instance.
+func NewMockGetUserURLs(ctrl *gomock.Controller) *MockGetUserURLs {
+	mock := &MockGetUserURLs{ctrl: ctrl}
+	mock.recorder = &MockGetUserURLsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockGetUserURLs) EXPECT() *MockGetUserURLsMockRecorder {
+	return m.recorder
+}
+
+// GetUserURLs mocks base method.
+func (m *MockGetUserURLs) GetUserURLs(ctx context.Context, userID string) ([]models.URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserURLs", ctx, userID)
+	ret0, _ := ret[0].([]models.URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserURLs indicates an expected call of GetUserURLs.
+func (mr *MockGetUserURLsMockRecorder) GetUserURLs(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserURLs", reflect.TypeOf((*MockGetUserURLs)(nil).GetUserURLs), ctx, userID)
 }

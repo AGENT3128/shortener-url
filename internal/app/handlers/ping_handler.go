@@ -37,6 +37,11 @@ func (h *PingHandler) Method() string {
 
 func (h *PingHandler) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		_, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
 		if err := h.repository.Ping(c.Request.Context()); err != nil {
 			h.logger.Error("Failed to ping database", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to ping database"})

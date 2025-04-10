@@ -21,7 +21,7 @@ type BatchShortenI interface {
 
 // AddBatchSetter interface for batch operations
 type AddBatchSetter interface {
-	AddBatch(ctx context.Context, urls []models.URL) error
+	AddBatch(ctx context.Context, userID string, urls []models.URL) error
 }
 
 // ShortenBatchRequest represents an item in the batch shortening request
@@ -66,6 +66,12 @@ func (h *ShortenBatchHandler) Method() string {
 // Handler returns the gin.HandlerFunc for the handler
 func (h *ShortenBatchHandler) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userID, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
 		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
@@ -111,7 +117,7 @@ func (h *ShortenBatchHandler) Handler() gin.HandlerFunc {
 
 		// batch adding for DB
 		if len(urls) > 0 {
-			if err := h.repository.AddBatch(c.Request.Context(), urls); err != nil {
+			if err := h.repository.AddBatch(c.Request.Context(), userID.(string), urls); err != nil {
 				h.logger.Error("failed to add batch", zap.Error(err))
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 				return
