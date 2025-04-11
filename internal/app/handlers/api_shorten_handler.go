@@ -21,7 +21,7 @@ type URLOriginalGetter interface {
 
 // URLSaver describes the behavior for saving short URL by original URL
 type URLSaver interface {
-	Add(ctx context.Context, shortID, originalURL string) (string, error)
+	Add(ctx context.Context, userID, shortID, originalURL string) (string, error)
 }
 
 // URLRepository combines URL getting and saving capabilities
@@ -70,6 +70,12 @@ func (h *APIShortenHandler) Method() string {
 // Handler returns the gin.HandlerFunc for the handler
 func (h *APIShortenHandler) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userID, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
 		var request ShortenRequest
 
 		body, err := io.ReadAll(c.Request.Body)
@@ -89,7 +95,7 @@ func (h *APIShortenHandler) Handler() gin.HandlerFunc {
 			return
 		}
 
-		shortID, err := h.repository.Add(c.Request.Context(), helpers.GenerateShortID(), request.URL)
+		shortID, err := h.repository.Add(c.Request.Context(), userID.(string), helpers.GenerateShortID(), request.URL)
 		if err != nil {
 			if errors.Is(err, models.ErrURLExists) {
 				h.logger.Info("URL already exists", zap.String("originalURL", request.URL))

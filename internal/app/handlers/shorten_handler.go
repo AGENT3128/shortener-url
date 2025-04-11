@@ -14,7 +14,7 @@ import (
 
 // shortenI describes the behavior for shortening a URL
 type shortenI interface {
-	Add(ctx context.Context, shortID, originalURL string) (string, error)
+	Add(ctx context.Context, userID, shortID, originalURL string) (string, error)
 }
 
 // ShortenHandler handles the creation of short URLs through plain text endpoint
@@ -47,6 +47,12 @@ func (h *ShortenHandler) Method() string {
 // Handler returns the gin.HandlerFunc for the handler
 func (h *ShortenHandler) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userID, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
 		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
@@ -60,7 +66,7 @@ func (h *ShortenHandler) Handler() gin.HandlerFunc {
 			return
 		}
 
-		shortID, err := h.repository.Add(c.Request.Context(), helpers.GenerateShortID(), originalURL)
+		shortID, err := h.repository.Add(c.Request.Context(), userID.(string), helpers.GenerateShortID(), originalURL)
 		if err != nil {
 			if errors.Is(err, models.ErrURLExists) {
 				h.logger.Info("URL already exists", zap.String("originalURL", originalURL))

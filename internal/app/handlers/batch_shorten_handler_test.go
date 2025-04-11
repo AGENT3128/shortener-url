@@ -19,7 +19,6 @@ func TestShortenBatchHandler(t *testing.T) {
 	// context for test
 	ctx := context.Background()
 
-
 	repo := mocks.NewMockMemoryRepository()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -29,6 +28,10 @@ func TestShortenBatchHandler(t *testing.T) {
 	batchHandler := NewShortenBatchHandler(repo, mocks.TestConfig.BaseURLAddress, logger)
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
+	router.Use(func(c *gin.Context) {
+		c.Set("userID", "test-user")
+		c.Next()
+	})
 	router.POST("/api/shorten/batch", batchHandler.Handler())
 
 	tests := []struct {

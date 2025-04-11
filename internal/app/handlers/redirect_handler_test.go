@@ -26,25 +26,30 @@ func TestRedirectHandler(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
+	router.Use(func(c *gin.Context) {
+		c.Set("userID", "test-user")
+		c.Next()
+	})
 	router.GET("/:id", handler.Handler())
 
 	// setup test cases
 	testCases := map[string]string{
 		"abc123": "ya.ru",
 		"def456": "yandex.ru",
+		"del123": "ya1.ru",
 	}
 
 	for shortID, originalURL := range testCases {
 		// base context for setup
 		setupCtx, setupCancel := context.WithTimeout(ctx, 5*time.Second)
 		defer setupCancel()
-
-		shortID, err := repo.Add(setupCtx, shortID, originalURL)
+		shortID, err := repo.Add(setupCtx, "test-user", shortID, originalURL)
 		if err != nil {
 			t.Fatalf("failed to add url: %v", err)
 		}
 		t.Logf("added url: %s -> %s", shortID, originalURL)
 	}
+	repo.MarkDeletedBatch(ctx, "test-user", []string{"del123"})
 
 	tests := []struct {
 		name    string
@@ -77,6 +82,19 @@ func TestRedirectHandler(t *testing.T) {
 				location    string
 			}{
 				statusCode:  http.StatusNotFound,
+				contentType: "application/json; charset=utf-8",
+				location:    "",
+			},
+		},
+		{
+			name:    "deleted url",
+			shortID: "del123",
+			want: struct {
+				statusCode  int
+				contentType string
+				location    string
+			}{
+				statusCode:  http.StatusGone,
 				contentType: "application/json; charset=utf-8",
 				location:    "",
 			},

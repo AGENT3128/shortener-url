@@ -60,7 +60,7 @@ func TestFileStorage(t *testing.T) {
 			requestCtx, requestCancel := context.WithTimeout(ctx, 2*time.Second)
 			defer requestCancel()
 
-			_, err := repo.Add(requestCtx, tt.shortID, tt.originalURL)
+			_, err := repo.Add(requestCtx, "test-user", tt.shortID, tt.originalURL)
 			if tt.wantError {
 				assert.Error(t, err)
 				assert.Equal(t, models.ErrURLExists, err)

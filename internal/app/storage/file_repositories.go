@@ -23,6 +23,8 @@ type FileStorage struct {
 type URLData struct {
 	OriginalURL string
 	UUID        string
+	UserID      string
+	IsDeleted   bool
 }
 
 type URLRecord struct {
@@ -52,7 +54,7 @@ func NewFileStorage(path string, logger *zap.Logger) (*FileStorage, error) {
 	return fs, nil
 }
 
-func (f *FileStorage) Add(ctx context.Context, shortID, originalURL string) (string, error) {
+func (f *FileStorage) Add(ctx context.Context, userID, shortID, originalURL string) (string, error) {
 	const method = "Add"
 	// before adding, check if the URL already exists (check by original URL)
 	if _, ok := f.GetByOriginalURL(ctx, originalURL); ok {
@@ -69,6 +71,7 @@ func (f *FileStorage) Add(ctx context.Context, shortID, originalURL string) (str
 	f.urls[shortID] = URLData{
 		OriginalURL: originalURL,
 		UUID:        uuid,
+		UserID:      userID,
 	}
 
 	if err := f.saveToFile(); err != nil {
@@ -82,12 +85,12 @@ func (f *FileStorage) GetByShortID(ctx context.Context, shortID string) (string,
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
-	urlData, ok := f.urls[shortID]
-	f.logger.Info(method, zap.String("shortID", shortID), zap.Any("urlData", urlData), zap.Bool("ok", ok))
-	if !ok {
+	url, ok := f.urls[shortID]
+	f.logger.Info(method, zap.String("shortID", shortID), zap.Any("urlData", url))
+	if !ok || url.IsDeleted {
 		return "", false
 	}
-	return urlData.OriginalURL, true
+	return url.OriginalURL, true
 }
 
 func (f *FileStorage) GetByOriginalURL(ctx context.Context, originalURL string) (string, bool) {
@@ -104,7 +107,7 @@ func (f *FileStorage) GetByOriginalURL(ctx context.Context, originalURL string) 
 	return "", false
 }
 
-func (f *FileStorage) AddBatch(ctx context.Context, urls []models.URL) error {
+func (f *FileStorage) AddBatch(ctx context.Context, userID string, urls []models.URL) error {
 	const method = "AddBatch"
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -116,6 +119,7 @@ func (f *FileStorage) AddBatch(ctx context.Context, urls []models.URL) error {
 		f.urls[url.ShortID] = URLData{
 			OriginalURL: url.OriginalURL,
 			UUID:        uuid,
+			UserID:      userID,
 		}
 	}
 
@@ -198,4 +202,61 @@ func (f *FileStorage) Close() error {
 func (f *FileStorage) Ping(ctx context.Context) error {
 	// not needed for file storage
 	return nil
+}
+
+func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) ([]models.URL, error) {
+	const method = "GetUserURLs"
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	urls := make([]models.URL, 0)
+	for shortURL, urlData := range f.urls {
+		if urlData.UserID == userID {
+			urls = append(urls, models.URL{ShortID: shortURL, OriginalURL: urlData.OriginalURL})
+		}
+	}
+	f.logger.Info(method, zap.String("userID", userID), zap.Int("count", len(urls)))
+	return urls, nil
+}
+
+// MarkDeletedBatch marks URLs as deleted in batch
+func (f *FileStorage) MarkDeletedBatch(ctx context.Context, userID string, shortIDs []string) error {
+	const method = "MarkDeletedBatch"
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	modified := false
+	for _, shortID := range shortIDs {
+		urlData, exists := f.urls[shortID]
+		if exists && urlData.UserID == userID {
+			urlData.IsDeleted = true
+			f.urls[shortID] = urlData
+			modified = true
+			f.logger.Info(method, zap.String("shortID", shortID), zap.String("userID", userID))
+		}
+	}
+
+	if modified {
+		if err := f.saveToFile(); err != nil {
+			f.logger.Error(method, zap.Error(err))
+			return err
+		}
+	}
+
+	return nil
+}
+
+// IsURLDeleted checks if URL is marked as deleted
+func (f *FileStorage) IsURLDeleted(ctx context.Context, shortID string) (bool, error) {
+	const method = "IsURLDeleted"
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	urlData, exists := f.urls[shortID]
+	f.logger.Info(method, zap.String("shortID", shortID), zap.Bool("exists", exists))
+	if !exists {
+		return false, nil
+	}
+
+	return urlData.IsDeleted, nil
 }
