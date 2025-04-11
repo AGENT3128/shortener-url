@@ -36,6 +36,7 @@ func TestRedirectHandler(t *testing.T) {
 	testCases := map[string]string{
 		"abc123": "ya.ru",
 		"def456": "yandex.ru",
+		"del123": "ya1.ru",
 	}
 
 	for shortID, originalURL := range testCases {
@@ -48,6 +49,7 @@ func TestRedirectHandler(t *testing.T) {
 		}
 		t.Logf("added url: %s -> %s", shortID, originalURL)
 	}
+	repo.MarkDeletedBatch(ctx, "test-user", []string{"del123"})
 
 	tests := []struct {
 		name    string
@@ -80,6 +82,19 @@ func TestRedirectHandler(t *testing.T) {
 				location    string
 			}{
 				statusCode:  http.StatusNotFound,
+				contentType: "application/json; charset=utf-8",
+				location:    "",
+			},
+		},
+		{
+			name:    "deleted url",
+			shortID: "del123",
+			want: struct {
+				statusCode  int
+				contentType string
+				location    string
+			}{
+				statusCode:  http.StatusGone,
 				contentType: "application/json; charset=utf-8",
 				location:    "",
 			},

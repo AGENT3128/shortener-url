@@ -12,6 +12,7 @@ import (
 // urlShortGetter describes the behavior for retrieving original URL by short ID
 type urlShortGetter interface {
 	GetByShortID(ctx context.Context, shortID string) (string, bool)
+	IsURLDeleted(ctx context.Context, shortID string) (bool, error)
 }
 
 // RedirectHandler handles redirects by short URL
@@ -44,6 +45,21 @@ func (h *RedirectHandler) Handler() gin.HandlerFunc {
 			return
 		}
 		shortID := strings.TrimPrefix(c.Request.URL.Path, "/")
+
+		// check if URL is marked as deleted
+		isDeleted, err := h.repository.IsURLDeleted(c.Request.Context(), shortID)
+		if err != nil {
+			h.logger.Error("error checking URL deleted status", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+
+		if isDeleted {
+			h.logger.Info("URL is marked as deleted", zap.String("shortID", shortID))
+			c.JSON(http.StatusGone, gin.H{"error": "URL has been deleted"})
+			return
+		}
+
 		originalURL, ok := h.repository.GetByShortID(c.Request.Context(), shortID)
 		h.logger.Info("get original URL", zap.String("shortID", shortID), zap.String("originalURL", originalURL), zap.Bool("exists", ok))
 		if !ok {

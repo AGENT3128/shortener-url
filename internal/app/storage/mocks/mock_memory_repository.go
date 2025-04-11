@@ -44,6 +44,7 @@ func (m *MockMemoryRepository) Add(ctx context.Context, userID, shortID, origina
 		ShortID:     shortID,
 		OriginalURL: originalURL,
 		UserID:      userID,
+		DeletedFlag: false,
 	}
 	return shortID, nil
 }
@@ -79,6 +80,7 @@ func (m *MockMemoryRepository) AddBatch(ctx context.Context, userID string, urls
 			ShortID:     url.ShortID,
 			OriginalURL: url.OriginalURL,
 			UserID:      userID,
+			DeletedFlag: false,
 		}
 	}
 
@@ -96,4 +98,33 @@ func (m *MockMemoryRepository) GetUserURLs(ctx context.Context, userID string) (
 		}
 	}
 	return urls, nil
+}
+
+// IsURLDeleted checks if a URL is marked as deleted
+func (m *MockMemoryRepository) IsURLDeleted(ctx context.Context, shortID string) (bool, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	url, exists := m.urls[shortID]
+	if !exists {
+		return false, nil
+	}
+
+	return url.DeletedFlag, nil
+}
+
+// MarkDeletedBatch marks URLs as deleted in batch
+func (m *MockMemoryRepository) MarkDeletedBatch(ctx context.Context, userID string, shortIDs []string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, shortID := range shortIDs {
+		url, exists := m.urls[shortID]
+		if exists && url.UserID == userID {
+			url.DeletedFlag = true
+			m.urls[shortID] = url
+		}
+	}
+
+	return nil
 }

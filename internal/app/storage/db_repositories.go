@@ -8,6 +8,7 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/app/db"
 	"github.com/AGENT3128/shortener-url/internal/app/models"
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
 )
@@ -63,22 +64,29 @@ func (r *URLRepository) Add(ctx context.Context, userID, shortID, originalURL st
 func (r *URLRepository) GetByShortID(ctx context.Context, shortID string) (string, bool) {
 	r.logger.Debug("Getting URL from database", zap.String("short_id", shortID))
 	sql := `
-		SELECT original_url
+		SELECT original_url, is_deleted
 		FROM ` + r.tableName + `
 		WHERE short_id = $1
 	`
 
 	var url models.URL
+	var isDeleted bool
 	err := r.db.Conn.QueryRow(
 		ctx,
 		sql,
 		shortID,
-	).Scan(&url.OriginalURL)
+	).Scan(&url.OriginalURL, &isDeleted)
 
 	if err != nil {
 		r.logger.Error("Failed to get URL from database", zap.Error(err))
 		return "", false
 	}
+
+	// Return deleted status along with the URL
+	if isDeleted {
+		return url.OriginalURL, false
+	}
+
 	return url.OriginalURL, true
 }
 
@@ -171,4 +179,58 @@ func (r *URLRepository) GetUserURLs(ctx context.Context, userID string) ([]model
 	}
 	r.logger.Debug(method, zap.String("userID", userID), zap.Int("count", len(urls)))
 	return urls, nil
+}
+
+// MarkDeletedBatch marks URLs as deleted in batch
+func (r *URLRepository) MarkDeletedBatch(ctx context.Context, userID string, shortIDs []string) error {
+	if len(shortIDs) == 0 {
+		return nil
+	}
+
+	r.logger.Debug("Marking URLs as deleted",
+		zap.String("user_id", userID),
+		zap.Int("count", len(shortIDs)))
+
+	sql := `
+		UPDATE ` + r.tableName + `
+		SET is_deleted = true
+		WHERE short_id = ANY($1) AND user_id = $2
+	`
+
+	_, err := r.db.Conn.Exec(ctx, sql, shortIDs, userID)
+	if err != nil {
+		r.logger.Error("Failed to mark URLs as deleted",
+			zap.String("user_id", userID),
+			zap.Int("count", len(shortIDs)),
+			zap.Error(err))
+		return err
+	}
+
+	r.logger.Info("Successfully marked URLs as deleted",
+		zap.String("user_id", userID),
+		zap.Int("count", len(shortIDs)))
+	return nil
+}
+
+// IsURLDeleted checks if URL is marked as deleted
+func (r *URLRepository) IsURLDeleted(ctx context.Context, shortID string) (bool, error) {
+	r.logger.Debug("Checking if URL is deleted", zap.String("short_id", shortID))
+
+	sql := `
+		SELECT COALESCE(is_deleted, false)
+		FROM ` + r.tableName + `
+		WHERE short_id = $1
+	`
+
+	var isDeleted bool
+	err := r.db.Conn.QueryRow(ctx, sql, shortID).Scan(&isDeleted)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		r.logger.Error("Failed to check if URL is deleted", zap.Error(err))
+		return false, err
+	}
+
+	return isDeleted, nil
 }

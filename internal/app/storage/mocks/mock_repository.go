@@ -286,6 +286,35 @@ func (mr *MockRepositoryMockRecorder) GetUserURLs(ctx, userID interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserURLs", reflect.TypeOf((*MockRepository)(nil).GetUserURLs), ctx, userID)
 }
 
+// IsURLDeleted mocks base method.
+func (m *MockRepository) IsURLDeleted(ctx context.Context, shortID string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsURLDeleted", ctx, shortID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsURLDeleted indicates an expected call of IsURLDeleted.
+func (mr *MockRepositoryMockRecorder) IsURLDeleted(ctx, shortID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsURLDeleted", reflect.TypeOf((*MockRepository)(nil).IsURLDeleted), ctx, shortID)
+}
+
+// MarkDeletedBatch mocks base method.
+func (m *MockRepository) MarkDeletedBatch(ctx context.Context, userID string, shortIDs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkDeletedBatch", ctx, userID, shortIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkDeletedBatch indicates an expected call of MarkDeletedBatch.
+func (mr *MockRepositoryMockRecorder) MarkDeletedBatch(ctx, userID, shortIDs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkDeletedBatch", reflect.TypeOf((*MockRepository)(nil).MarkDeletedBatch), ctx, userID, shortIDs)
+}
+
 // Ping mocks base method.
 func (m *MockRepository) Ping(ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -478,4 +507,56 @@ func (m *MockGetUserURLs) GetUserURLs(ctx context.Context, userID string) ([]mod
 func (mr *MockGetUserURLsMockRecorder) GetUserURLs(ctx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserURLs", reflect.TypeOf((*MockGetUserURLs)(nil).GetUserURLs), ctx, userID)
+}
+
+// MockURLDeleter is a mock of URLDeleter interface.
+type MockURLDeleter struct {
+	ctrl     *gomock.Controller
+	recorder *MockURLDeleterMockRecorder
+}
+
+// MockURLDeleterMockRecorder is the mock recorder for MockURLDeleter.
+type MockURLDeleterMockRecorder struct {
+	mock *MockURLDeleter
+}
+
+// NewMockURLDeleter creates a new mock instance.
+func NewMockURLDeleter(ctrl *gomock.Controller) *MockURLDeleter {
+	mock := &MockURLDeleter{ctrl: ctrl}
+	mock.recorder = &MockURLDeleterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockURLDeleter) EXPECT() *MockURLDeleterMockRecorder {
+	return m.recorder
+}
+
+// IsURLDeleted mocks base method.
+func (m *MockURLDeleter) IsURLDeleted(ctx context.Context, shortID string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsURLDeleted", ctx, shortID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsURLDeleted indicates an expected call of IsURLDeleted.
+func (mr *MockURLDeleterMockRecorder) IsURLDeleted(ctx, shortID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsURLDeleted", reflect.TypeOf((*MockURLDeleter)(nil).IsURLDeleted), ctx, shortID)
+}
+
+// MarkDeletedBatch mocks base method.
+func (m *MockURLDeleter) MarkDeletedBatch(ctx context.Context, userID string, shortIDs []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkDeletedBatch", ctx, userID, shortIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkDeletedBatch indicates an expected call of MarkDeletedBatch.
+func (mr *MockURLDeleterMockRecorder) MarkDeletedBatch(ctx, userID, shortIDs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkDeletedBatch", reflect.TypeOf((*MockURLDeleter)(nil).MarkDeletedBatch), ctx, userID, shortIDs)
 }

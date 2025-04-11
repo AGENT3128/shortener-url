@@ -40,6 +40,7 @@ type Repository interface {
 	ShortenerGet
 	PingDB
 	GetUserURLs
+	URLDeleter
 }
 
 type ShortenerSet interface {
@@ -58,6 +59,11 @@ type PingDB interface {
 
 type GetUserURLs interface {
 	GetUserURLs(ctx context.Context, userID string) ([]models.URL, error)
+}
+
+type URLDeleter interface {
+	MarkDeletedBatch(ctx context.Context, userID string, shortIDs []string) error
+	IsURLDeleted(ctx context.Context, shortID string) (bool, error)
 }
 
 type Server struct {
@@ -165,6 +171,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlers.NewPingHandler(repo, options.logger),
 		handlers.NewShortenBatchHandler(repo, options.config.BaseURLAddress, options.logger),
 		handlers.NewUserURLsHandler(repo, options.config.BaseURLAddress, options.logger),
+		handlers.NewUserURLsDeleteHandler(repo, options.logger),
 	}
 
 	for _, handler := range handlers {
@@ -191,6 +198,13 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
+	// correct stop all handlers
+	for _, handler := range s.handlers {
+		if shutdown, ok := handler.(interface{ Shutdown() }); ok {
+			shutdown.Shutdown()
+		}
+	}
+
 	return s.httpServer.Shutdown(ctx)
 }
 

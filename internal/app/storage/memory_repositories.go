@@ -49,6 +49,9 @@ func (m *MemStorage) GetByShortID(ctx context.Context, shortID string) (string, 
 
 	url, ok := m.urls[shortID]
 	m.logger.Info(method, zap.String("shortID", shortID), zap.String("originalURL", url.OriginalURL), zap.Bool("ok", ok))
+	if url.DeletedFlag {
+		return url.OriginalURL, false
+	}
 	return url.OriginalURL, ok
 }
 
@@ -101,4 +104,37 @@ func (m *MemStorage) GetUserURLs(ctx context.Context, userID string) ([]models.U
 	}
 	m.logger.Info(method, zap.String("userID", userID), zap.Int("count", len(urls)))
 	return urls, nil
+}
+
+// MarkDeletedBatch marks URLs as deleted in batch
+func (m *MemStorage) MarkDeletedBatch(ctx context.Context, userID string, shortIDs []string) error {
+	const method = "MarkDeletedBatch"
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, shortID := range shortIDs {
+		url, exists := m.urls[shortID]
+		if exists && url.UserID == userID {
+			url.DeletedFlag = true
+			m.urls[shortID] = url
+			m.logger.Info(method, zap.String("shortID", shortID), zap.String("userID", userID))
+		}
+	}
+
+	return nil
+}
+
+// IsURLDeleted checks if URL is marked as deleted
+func (m *MemStorage) IsURLDeleted(ctx context.Context, shortID string) (bool, error) {
+	const method = "IsURLDeleted"
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	url, exists := m.urls[shortID]
+	m.logger.Info(method, zap.String("shortID", shortID), zap.Bool("exists", exists))
+	if !exists {
+		return false, nil
+	}
+
+	return url.DeletedFlag, nil
 }

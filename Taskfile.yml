@@ -141,6 +141,12 @@ tasks:
     cmds:
       - shortenertestbeta -test.v -test.run=^TestIteration14$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
 
+  test_increment_15:
+    desc: Test increment 15
+    deps: [build]
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration15$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+
   test_increment_all:
     desc: Run all tests
     cmds:
@@ -158,6 +164,7 @@ tasks:
       - task: test_increment_12
       - task: test_increment_13
       - task: test_increment_14
+      - task: test_increment_15
       - echo "All tests passed"
 
   run:

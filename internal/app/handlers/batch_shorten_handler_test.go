@@ -19,7 +19,6 @@ func TestShortenBatchHandler(t *testing.T) {
 	// context for test
 	ctx := context.Background()
 
-
 	repo := mocks.NewMockMemoryRepository()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
