@@ -26,3 +26,5 @@ vendor/
 build
 
 test.json
+coverage.out
+coverage.html
