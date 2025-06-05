@@ -108,6 +108,9 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		handlers.WithUserURLsUsecase(options.URLusecase),
 		handlers.WithUserURLsLogger(options.logger),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	userURLsDeleteHandler, err := handlers.NewUserURLsDeleteHandler(
 		handlers.WithUserURLsDeleteUsecase(options.URLusecase),
