@@ -5,13 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	// import driver pgx for register in sqlx.
-
 	"github.com/jackc/pgx/v5/pgxpool"
+	// import driver pgx for register in sqlx.
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
-
-const ()
 
 type options struct {
 	maxConns          int
@@ -75,8 +72,8 @@ func New(ctx context.Context, databaseURL string, opts ...Option) (*Database, er
 		return nil, fmt.Errorf("failed to parse conn string: %w", err)
 	}
 
-	config.MaxConns = int32(options.maxConns)
-	config.MinConns = int32(options.minConns)
+	config.MaxConns = int32(options.maxConns) //nolint:gosec // maxConns is a positive integer
+	config.MinConns = int32(options.minConns) //nolint:gosec // minConns is a positive integer
 	config.MaxConnLifetime = options.connMaxLifetime
 	config.MaxConnIdleTime = options.connMaxIdleTime
 	config.HealthCheckPeriod = options.healthCheckPeriod

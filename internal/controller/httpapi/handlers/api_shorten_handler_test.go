@@ -155,9 +155,13 @@ func TestAPIShortenHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			test.setup()
-			req, err := http.NewRequest(test.request.method, test.request.path, strings.NewReader(test.request.body))
+			req, errRequest := http.NewRequest(
+				test.request.method,
+				test.request.path,
+				strings.NewReader(test.request.body),
+			)
 
-			require.NoError(t, err)
+			require.NoError(t, errRequest)
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()

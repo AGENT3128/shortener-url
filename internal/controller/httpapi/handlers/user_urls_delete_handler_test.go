@@ -142,11 +142,11 @@ func TestUserURLsDeleteHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			test.setup()
-			body, err := json.Marshal(test.request.body)
-			require.NoError(t, err)
+			body, errMarshal := json.Marshal(test.request.body)
+			require.NoError(t, errMarshal)
 
-			req, err := http.NewRequest(test.request.method, test.request.path, bytes.NewReader(body))
-			require.NoError(t, err)
+			req, errRequest := http.NewRequest(test.request.method, test.request.path, bytes.NewReader(body))
+			require.NoError(t, errRequest)
 
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, req)

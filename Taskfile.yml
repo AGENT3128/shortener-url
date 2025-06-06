@@ -165,6 +165,12 @@ tasks:
     cmds:
       - shortenertestbeta -test.v -test.run=^TestIteration16$  -source-path=. 
 
+  test_increment_17:
+    desc: Test increment 17
+    deps: [build]
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration17$ -source-path=. 
+
   test_increment_all:
     desc: Run all tests
     cmds:
@@ -183,6 +189,8 @@ tasks:
       - task: test_increment_13
       - task: test_increment_14
       - task: test_increment_15
+      - task: test_increment_16
+      - task: test_increment_17
       - echo "All tests passed"
 
   run:

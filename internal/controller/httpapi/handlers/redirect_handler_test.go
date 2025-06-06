@@ -42,7 +42,6 @@ func TestRedirectHandler(t *testing.T) {
 	router.Method(handler.Method(), handler.Pattern(), handler.HandlerFunc())
 
 	type request struct {
-		body   any
 		path   string
 		method string
 	}
@@ -106,8 +105,8 @@ func TestRedirectHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			test.setup()
-			req, err := http.NewRequest(test.request.method, test.request.path, nil)
-			require.NoError(t, err)
+			req, errRequest := http.NewRequest(test.request.method, test.request.path, nil)
+			require.NoError(t, errRequest)
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, req)
 

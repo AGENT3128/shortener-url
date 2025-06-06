@@ -35,10 +35,11 @@ func GenerateShortIDOptimized() (string, error) {
 	}
 
 	charsetLen := byte(len(CHARSET))
-	for i := 0; i < LENGTH; i++ {
+	for i := range LENGTH {
 		// Ensure uniform distribution by rejecting bytes that would create modulo bias
 		// Maximum value that can be used without bias
-		maxAcceptable := 256 - (256 % uint16(charsetLen))
+		const maxByteValue = 256
+		maxAcceptable := maxByteValue - (maxByteValue % uint16(charsetLen))
 		b := randomBytes[i]
 
 		// Reject values that would create bias
