@@ -19,11 +19,13 @@ func JSONResponse(w http.ResponseWriter, status int, data any) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 func TextResponse(w http.ResponseWriter, status int, data string) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(status)
-	w.Write([]byte(data))
+	_, _ = w.Write([]byte(data))
 }

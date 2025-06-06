@@ -149,11 +149,15 @@ func TestBatchShortenHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			test.setup()
-			requestBody, err := json.Marshal(test.request.body)
-			require.NoError(t, err)
-			req, err := http.NewRequest(test.request.method, test.request.path, strings.NewReader(string(requestBody)))
+			requestBody, errMarshal := json.Marshal(test.request.body)
+			require.NoError(t, errMarshal)
+			req, errRequest := http.NewRequest(
+				test.request.method,
+				test.request.path,
+				strings.NewReader(string(requestBody)),
+			)
 
-			require.NoError(t, err)
+			require.NoError(t, errRequest)
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()

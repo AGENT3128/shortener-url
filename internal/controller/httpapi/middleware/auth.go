@@ -13,7 +13,7 @@ import (
 
 const (
 	tokenExpires = 1 * time.Hour
-	secretKey    = "NuQu82Q2"
+	secretKey    = "NuQu82Q2" //nolint:gosec // secret key is used for authentication (test project)
 	authCookie   = "Auth"
 )
 
@@ -30,20 +30,20 @@ type optionsAuthMiddleware struct {
 	logger *zap.Logger
 }
 
-type optionAuthMiddleware func(options *optionsAuthMiddleware) error
+type OptionAuthMiddleware func(options *optionsAuthMiddleware) error
 
 type AuthMiddleware struct {
 	logger *zap.Logger
 }
 
-func WithAuthMiddlewareLogger(logger *zap.Logger) optionAuthMiddleware {
+func WithAuthMiddlewareLogger(logger *zap.Logger) OptionAuthMiddleware {
 	return func(options *optionsAuthMiddleware) error {
 		options.logger = logger.With(zap.String("middleware", "auth"))
 		return nil
 	}
 }
 
-func NewAuthMiddleware(opts ...optionAuthMiddleware) (*AuthMiddleware, error) {
+func NewAuthMiddleware(opts ...OptionAuthMiddleware) (*AuthMiddleware, error) {
 	options := &optionsAuthMiddleware{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -65,9 +65,9 @@ func (m *AuthMiddleware) Handler() func(http.Handler) http.Handler {
 				m.logger.Info("No cookie found, generating new token")
 				// generate token and set cookie
 				userID := uuid.New().String()
-				tokenString, err := generateToken(userID)
-				if err != nil {
-					m.logger.Error("Failed to generate token", zap.Error(err))
+				tokenString, errGenerate := generateToken(userID)
+				if errGenerate != nil {
+					m.logger.Error("Failed to generate token", zap.Error(errGenerate))
 					http.Error(w, "Internal server error", http.StatusInternalServerError)
 					return
 				}
@@ -123,7 +123,7 @@ func generateToken(userID string) (string, error) {
 
 func getUserID(tokenString string) (string, error) {
 	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(_ *jwt.Token) (any, error) {
 		return []byte(secretKey), nil
 	})
 	if err != nil {

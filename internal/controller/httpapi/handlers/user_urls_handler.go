@@ -18,7 +18,7 @@ type userURLsOptions struct {
 	baseURL string
 }
 
-type userURLsOption func(options *userURLsOptions) error
+type UserURLsOption func(options *userURLsOptions) error
 
 type UserURLsHandler struct {
 	usecase UserURLGetter
@@ -26,28 +26,28 @@ type UserURLsHandler struct {
 	baseURL string
 }
 
-func WithUserURLsBaseURL(baseURL string) userURLsOption {
+func WithUserURLsBaseURL(baseURL string) UserURLsOption {
 	return func(options *userURLsOptions) error {
 		options.baseURL = baseURL
 		return nil
 	}
 }
 
-func WithUserURLsUsecase(usecase UserURLGetter) userURLsOption {
+func WithUserURLsUsecase(usecase UserURLGetter) UserURLsOption {
 	return func(options *userURLsOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
-func WithUserURLsLogger(logger *zap.Logger) userURLsOption {
+func WithUserURLsLogger(logger *zap.Logger) UserURLsOption {
 	return func(options *userURLsOptions) error {
 		options.logger = logger.With(zap.String("handler", "UserURLsHandler"))
 		return nil
 	}
 }
 
-func NewUserURLsHandler(opts ...userURLsOption) (*UserURLsHandler, error) {
+func NewUserURLsHandler(opts ...UserURLsOption) (*UserURLsHandler, error) {
 	options := &userURLsOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -97,7 +97,9 @@ func (h *UserURLsHandler) HandlerFunc() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(h.toResponse(urls))
+		if errEncode := json.NewEncoder(w).Encode(h.toResponse(urls)); errEncode != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }
 

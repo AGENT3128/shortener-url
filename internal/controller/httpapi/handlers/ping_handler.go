@@ -14,28 +14,28 @@ type pingOptions struct {
 	logger  *zap.Logger
 }
 
-type pingOption func(options *pingOptions) error
+type PingOption func(options *pingOptions) error
 
 type PingHandler struct {
 	usecase Pinger
 	logger  *zap.Logger
 }
 
-func WithPingUsecase(usecase Pinger) pingOption {
+func WithPingUsecase(usecase Pinger) PingOption {
 	return func(options *pingOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
-func WithPingLogger(logger *zap.Logger) pingOption {
+func WithPingLogger(logger *zap.Logger) PingOption {
 	return func(options *pingOptions) error {
 		options.logger = logger.With(zap.String("handler", "PingHandler"))
 		return nil
 	}
 }
 
-func NewPingHandler(opts ...pingOption) (*PingHandler, error) {
+func NewPingHandler(opts ...PingOption) (*PingHandler, error) {
 	options := &pingOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {

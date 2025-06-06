@@ -15,28 +15,28 @@ type userURLsDeleteOptions struct {
 	logger  *zap.Logger
 }
 
-type userURLsDeleteOption func(options *userURLsDeleteOptions) error
+type UserURLsDeleteOption func(options *userURLsDeleteOptions) error
 
 type UserURLsDeleteHandler struct {
 	usecase UserURLDeleter
 	logger  *zap.Logger
 }
 
-func WithUserURLsDeleteUsecase(usecase UserURLDeleter) userURLsDeleteOption {
+func WithUserURLsDeleteUsecase(usecase UserURLDeleter) UserURLsDeleteOption {
 	return func(options *userURLsDeleteOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
-func WithUserURLsDeleteLogger(logger *zap.Logger) userURLsDeleteOption {
+func WithUserURLsDeleteLogger(logger *zap.Logger) UserURLsDeleteOption {
 	return func(options *userURLsDeleteOptions) error {
 		options.logger = logger.With(zap.String("handler", "UserURLsDeleteHandler"))
 		return nil
 	}
 }
 
-func NewUserURLsDeleteHandler(opts ...userURLsDeleteOption) (*UserURLsDeleteHandler, error) {
+func NewUserURLsDeleteHandler(opts ...UserURLsDeleteOption) (*UserURLsDeleteHandler, error) {
 	options := &userURLsDeleteOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {

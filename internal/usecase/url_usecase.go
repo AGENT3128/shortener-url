@@ -20,7 +20,7 @@ type options struct {
 	worker     *worker.DeleteWorker
 }
 
-type option func(options *options) error
+type Option func(options *options) error
 
 type URLUsecase struct {
 	repository URLRepository
@@ -28,7 +28,7 @@ type URLUsecase struct {
 	worker     *worker.DeleteWorker
 }
 
-func NewURLUsecase(opts ...option) (*URLUsecase, error) {
+func NewURLUsecase(opts ...Option) (*URLUsecase, error) {
 	options := &options{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -48,21 +48,21 @@ func NewURLUsecase(opts ...option) (*URLUsecase, error) {
 	}, nil
 }
 
-func WithDeleteWorker(worker *worker.DeleteWorker) option {
+func WithDeleteWorker(worker *worker.DeleteWorker) Option {
 	return func(options *options) error {
 		options.worker = worker
 		return nil
 	}
 }
 
-func WithURLUsecaseRepository(repository URLRepository) option {
+func WithURLUsecaseRepository(repository URLRepository) Option {
 	return func(options *options) error {
 		options.repository = repository
 		return nil
 	}
 }
 
-func WithURLUsecaseLogger(logger *zap.Logger) option {
+func WithURLUsecaseLogger(logger *zap.Logger) Option {
 	return func(options *options) error {
 		options.logger = logger.With(zap.String("usecase", "URLUsecase"))
 		return nil
@@ -76,8 +76,11 @@ func (uc *URLUsecase) Shutdown() {
 }
 
 func (uc *URLUsecase) Add(ctx context.Context, userID string, originalURL string) (string, error) {
-	shortURL := shorneter.GenerateShortID()
-	shortURL, err := uc.repository.Add(ctx, userID, shortURL, originalURL)
+	shortURL, err := shorneter.GenerateShortIDOptimized()
+	if err != nil {
+		return "", err
+	}
+	shortURL, err = uc.repository.Add(ctx, userID, shortURL, originalURL)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -129,7 +132,10 @@ func (uc *URLUsecase) AddBatch(ctx context.Context, userID string, urls []entity
 		existingURL, err := uc.GetByOriginalURL(ctx, url.OriginalURL)
 		if err != nil {
 			if errors.Is(err, entity.ErrURLNotFound) {
-				shortURL := shorneter.GenerateShortID()
+				shortURL, errGenerate := shorneter.GenerateShortIDOptimized()
+				if errGenerate != nil {
+					return nil, errGenerate
+				}
 				uniqueURLs = append(uniqueURLs, entity.URL{
 					OriginalURL: url.OriginalURL,
 					ShortURL:    shortURL,
@@ -156,7 +162,7 @@ func (uc *URLUsecase) GetUserURLs(ctx context.Context, userID string) ([]entity.
 	return uc.repository.GetUserURLs(ctx, userID)
 }
 
-func (uc *URLUsecase) DeleteUserURLs(ctx context.Context, userID string, shortURLs []string) error {
+func (uc *URLUsecase) DeleteUserURLs(_ context.Context, userID string, shortURLs []string) error {
 	uc.logger.Info("deleting user URLs", zap.String("userID", userID), zap.Any("shortURLs", shortURLs))
 	if uc.worker != nil {
 		uc.worker.EnqueueDelete(worker.DeleteRequest{

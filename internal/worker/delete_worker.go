@@ -8,6 +8,12 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	defaultFlushInterval = 500 * time.Millisecond
+	defaultBatchSize     = 50
+	defaultChannelSize   = 100
+)
+
 // URLDeleter describes the behavior for marking URLs as deleted in batch.
 type URLDeleter interface {
 	MarkDeletedBatch(ctx context.Context, userID string, shortURLs []string) error
@@ -37,9 +43,9 @@ func NewDeleteWorker(repo URLDeleter, logger *zap.Logger, opts ...Option) *Delet
 	w := &DeleteWorker{
 		repository:     repo,
 		logger:         logger,
-		deleteRequests: make(chan DeleteRequest, 100),
-		batchSize:      50,
-		flushInterval:  500 * time.Millisecond,
+		deleteRequests: make(chan DeleteRequest, defaultChannelSize),
+		batchSize:      defaultBatchSize,
+		flushInterval:  defaultFlushInterval,
 		done:           make(chan struct{}),
 	}
 
@@ -95,7 +101,8 @@ func (w *DeleteWorker) processDeleteRequests() {
 	batches := make(map[string][]string)
 	lastFlush := time.Now()
 
-	ticker := time.NewTicker(w.flushInterval / 5)
+	const tickerInterval = 5
+	ticker := time.NewTicker(w.flushInterval / tickerInterval)
 	defer ticker.Stop()
 
 	for {
@@ -133,7 +140,8 @@ func (w *DeleteWorker) processDeleteRequests() {
 
 // processBatch processes one batch of delete requests.
 func (w *DeleteWorker) processBatch(userID string, shortURLs []string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	const timeout = 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	err := w.repository.MarkDeletedBatch(ctx, userID, shortURLs)
