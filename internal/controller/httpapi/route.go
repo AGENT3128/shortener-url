@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	_ "net/http/pprof"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
@@ -125,6 +127,8 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 	router.Use(customLogger.Handler())
 	router.Use(authMiddleware.Handler())
 	router.Use(customMiddleware.GzipMiddleware())
+	// pprof
+	router.Mount("/debug", middleware.Profiler())
 
 	h := []handler{
 		shortenHandler,
