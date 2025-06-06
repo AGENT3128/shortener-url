@@ -19,14 +19,17 @@ type batchShortenOptions struct {
 	baseURL string
 }
 
+// BatchShortenOption is the option for the batch shorten handler.
 type BatchShortenOption func(options *batchShortenOptions) error
 
+// BatchShortenHandler is the handler for the batch shorten.
 type BatchShortenHandler struct {
 	usecase BatchURLSaver
 	logger  *zap.Logger
 	baseURL string
 }
 
+// WithBatchShortenBaseURL is the option for the batch shorten handler to set the base URL.
 func WithBatchShortenBaseURL(baseURL string) BatchShortenOption {
 	return func(options *batchShortenOptions) error {
 		options.baseURL = baseURL
@@ -34,6 +37,7 @@ func WithBatchShortenBaseURL(baseURL string) BatchShortenOption {
 	}
 }
 
+// WithBatchShortenUsecase is the option for the batch shorten handler to set the usecase.
 func WithBatchShortenUsecase(usecase BatchURLSaver) BatchShortenOption {
 	return func(options *batchShortenOptions) error {
 		options.usecase = usecase
@@ -41,6 +45,7 @@ func WithBatchShortenUsecase(usecase BatchURLSaver) BatchShortenOption {
 	}
 }
 
+// WithBatchShortenLogger is the option for the batch shorten handler to set the logger.
 func WithBatchShortenLogger(logger *zap.Logger) BatchShortenOption {
 	return func(options *batchShortenOptions) error {
 		options.logger = logger.With(zap.String("handler", "BatchShortenHandler"))
@@ -48,6 +53,7 @@ func WithBatchShortenLogger(logger *zap.Logger) BatchShortenOption {
 	}
 }
 
+// NewBatchShortenHandler creates a new batch shorten handler.
 func NewBatchShortenHandler(opts ...BatchShortenOption) (*BatchShortenHandler, error) {
 	options := &batchShortenOptions{}
 	for _, opt := range opts {
@@ -68,14 +74,17 @@ func NewBatchShortenHandler(opts ...BatchShortenOption) (*BatchShortenHandler, e
 	}, nil
 }
 
+// Pattern is the pattern for the batch shorten.
 func (h *BatchShortenHandler) Pattern() string {
 	return "/api/shorten/batch"
 }
 
+// Method is the method for the batch shorten.
 func (h *BatchShortenHandler) Method() string {
 	return http.MethodPost
 }
 
+// HandlerFunc is the handler func for the batch shorten.
 func (h *BatchShortenHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.UserIDKey).(string)

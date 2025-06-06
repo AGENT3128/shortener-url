@@ -14,12 +14,14 @@ import (
 
 //go:generate sqlc generate
 
+// URLRepository is the repository for the URL.
 type URLRepository struct {
 	db      *database.Database
 	logger  *zap.Logger
 	queries *generated.Queries
 }
 
+// NewURLRepository creates a new URLRepository.
 func NewURLRepository(db *database.Database, logger *zap.Logger) *URLRepository {
 	return &URLRepository{
 		db:      db,
@@ -28,6 +30,7 @@ func NewURLRepository(db *database.Database, logger *zap.Logger) *URLRepository 
 	}
 }
 
+// Add adds a URL.
 func (r *URLRepository) Add(ctx context.Context, userID, shortURL, originalURL string) (string, error) {
 	shortURL, err := r.queries.AddURL(ctx, generated.AddURLParams{
 		UserID:      userID,
@@ -41,6 +44,7 @@ func (r *URLRepository) Add(ctx context.Context, userID, shortURL, originalURL s
 	return shortURL, nil
 }
 
+// GetByOriginalURL gets the short URL by the original URL.
 func (r *URLRepository) GetByOriginalURL(ctx context.Context, originalURL string) (string, error) {
 	shortURL, err := r.queries.GetURLByOriginalURL(ctx, originalURL)
 	if err != nil {
@@ -50,6 +54,7 @@ func (r *URLRepository) GetByOriginalURL(ctx context.Context, originalURL string
 	return shortURL, nil
 }
 
+// GetByShortURL gets the original URL by the short URL.
 func (r *URLRepository) GetByShortURL(ctx context.Context, shortURL string) (string, error) {
 	row, err := r.queries.GetURLByShortURL(ctx, shortURL)
 	if err != nil {
@@ -61,10 +66,12 @@ func (r *URLRepository) GetByShortURL(ctx context.Context, shortURL string) (str
 	return row.OriginalUrl, nil
 }
 
+// Ping pings the database.
 func (r *URLRepository) Ping(ctx context.Context) error {
 	return r.db.Pool.Ping(ctx)
 }
 
+// AddBatch adds a batch of URLs.
 func (r *URLRepository) AddBatch(ctx context.Context, userID string, urls []entity.URL) error {
 	tx, err := r.db.Pool.Begin(ctx)
 	if err != nil {
@@ -94,6 +101,7 @@ func (r *URLRepository) AddBatch(ctx context.Context, userID string, urls []enti
 	return tx.Commit(ctx)
 }
 
+// GetUserURLs gets user URLs.
 func (r *URLRepository) GetUserURLs(ctx context.Context, userID string) ([]entity.URL, error) {
 	urls, err := r.queries.GetURLsByUserID(ctx, userID)
 	if err != nil {
@@ -109,6 +117,7 @@ func (r *URLRepository) GetUserURLs(ctx context.Context, userID string) ([]entit
 	return result, nil
 }
 
+// MarkDeletedBatch marks a batch of URLs as deleted.
 func (r *URLRepository) MarkDeletedBatch(ctx context.Context, userID string, shortURLs []string) error {
 	err := r.queries.MarkDeletedBatch(ctx, generated.MarkDeletedBatchParams{
 		UserID:  userID,

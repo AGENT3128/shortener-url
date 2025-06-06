@@ -17,10 +17,13 @@ const (
 	authCookie   = "Auth"
 )
 
+// contextKey is the key for the context.
 type contextKey string
 
+// UserIDKey is the key for the user ID in the context.
 const UserIDKey contextKey = "userID"
 
+// Claims is the claims for the auth middleware.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string
@@ -30,12 +33,15 @@ type optionsAuthMiddleware struct {
 	logger *zap.Logger
 }
 
+// OptionAuthMiddleware is the option for the auth middleware.
 type OptionAuthMiddleware func(options *optionsAuthMiddleware) error
 
+// AuthMiddleware is the auth middleware.
 type AuthMiddleware struct {
 	logger *zap.Logger
 }
 
+// WithAuthMiddlewareLogger is the option for the auth middleware to set the logger.
 func WithAuthMiddlewareLogger(logger *zap.Logger) OptionAuthMiddleware {
 	return func(options *optionsAuthMiddleware) error {
 		options.logger = logger.With(zap.String("middleware", "auth"))
@@ -43,6 +49,7 @@ func WithAuthMiddlewareLogger(logger *zap.Logger) OptionAuthMiddleware {
 	}
 }
 
+// NewAuthMiddleware creates a new auth middleware.
 func NewAuthMiddleware(opts ...OptionAuthMiddleware) (*AuthMiddleware, error) {
 	options := &optionsAuthMiddleware{}
 	for _, opt := range opts {

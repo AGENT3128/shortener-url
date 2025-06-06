@@ -13,6 +13,7 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/entity"
 )
 
+// Storage is the file storage for the URL.
 type Storage struct {
 	file     *os.File
 	mu       sync.RWMutex
@@ -21,6 +22,7 @@ type Storage struct {
 	logger   *zap.Logger
 }
 
+// URLData is the data for the URL.
 type URLData struct {
 	OriginalURL string
 	UUID        string
@@ -28,12 +30,14 @@ type URLData struct {
 	IsDeleted   bool
 }
 
+// URLRecord is the record for the URL.
 type URLRecord struct {
 	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
 
+// NewFileStorage creates a new FileStorage.
 func NewFileStorage(path string, logger *zap.Logger) (*Storage, error) {
 	logger = logger.With(zap.String("storage", "file"))
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
@@ -55,6 +59,7 @@ func NewFileStorage(path string, logger *zap.Logger) (*Storage, error) {
 	return fs, nil
 }
 
+// Add adds a URL.
 func (f *Storage) Add(_ context.Context, userID, shortID, originalURL string) (string, error) {
 	const method = "Add"
 	f.mu.Lock()
@@ -75,6 +80,7 @@ func (f *Storage) Add(_ context.Context, userID, shortID, originalURL string) (s
 	return shortID, nil
 }
 
+// GetByShortURL gets the original URL by the short URL.
 func (f *Storage) GetByShortURL(_ context.Context, shortURL string) (string, error) {
 	const method = "GetByShortURL"
 	f.mu.RLock()
@@ -91,6 +97,7 @@ func (f *Storage) GetByShortURL(_ context.Context, shortURL string) (string, err
 	return url.OriginalURL, nil
 }
 
+// GetByOriginalURL gets the short URL by the original URL.
 func (f *Storage) GetByOriginalURL(_ context.Context, originalURL string) (string, error) {
 	const method = "GetByOriginalURL"
 	f.mu.RLock()
@@ -105,6 +112,7 @@ func (f *Storage) GetByOriginalURL(_ context.Context, originalURL string) (strin
 	return "", entity.ErrURLNotFound
 }
 
+// AddBatch adds a batch of URLs.
 func (f *Storage) AddBatch(_ context.Context, userID string, urls []entity.URL) error {
 	const method = "AddBatch"
 	f.mu.Lock()
@@ -129,6 +137,7 @@ func (f *Storage) AddBatch(_ context.Context, userID string, urls []entity.URL) 
 	return nil
 }
 
+// loadFromFile loads the URLs from the file.
 func (f *Storage) loadFromFile() error {
 	const method = "loadFromFile"
 	if _, err := f.file.Seek(0, 0); err != nil {
@@ -156,6 +165,7 @@ func (f *Storage) loadFromFile() error {
 	return scanner.Err()
 }
 
+// saveToFile saves the URLs to the file.
 func (f *Storage) saveToFile() error {
 	const method = "saveToFile"
 	if err := f.file.Truncate(0); err != nil {
@@ -193,15 +203,18 @@ func (f *Storage) saveToFile() error {
 	return writer.Flush()
 }
 
+// Close closes the file storage.
 func (f *Storage) Close() error {
 	return f.file.Close()
 }
 
+// Ping pings the file storage.
 func (f *Storage) Ping(_ context.Context) error {
 	// not needed for file storage
 	return nil
 }
 
+// GetUserURLs gets user URLs.
 func (f *Storage) GetUserURLs(_ context.Context, userID string) ([]entity.URL, error) {
 	const method = "GetUserURLs"
 	f.mu.RLock()

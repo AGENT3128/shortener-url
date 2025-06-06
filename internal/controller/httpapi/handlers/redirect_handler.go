@@ -11,6 +11,7 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/entity"
 )
 
+// RedirectHandler is the handler for the redirect.
 type RedirectHandler struct {
 	usecase URLGetter
 	logger  *zap.Logger
@@ -21,8 +22,10 @@ type redirectOptions struct {
 	logger  *zap.Logger
 }
 
+// RedirectOption is the option for the redirect handler.
 type RedirectOption func(options *redirectOptions) error
 
+// WithRedirectUsecase is the option for the redirect handler to set the usecase.
 func WithRedirectUsecase(usecase URLGetter) RedirectOption {
 	return func(options *redirectOptions) error {
 		options.usecase = usecase
@@ -30,6 +33,7 @@ func WithRedirectUsecase(usecase URLGetter) RedirectOption {
 	}
 }
 
+// WithRedirectLogger is the option for the redirect handler to set the logger.
 func WithRedirectLogger(logger *zap.Logger) RedirectOption {
 	return func(options *redirectOptions) error {
 		options.logger = logger.With(zap.String("handler", "RedirectHandler"))
@@ -37,6 +41,7 @@ func WithRedirectLogger(logger *zap.Logger) RedirectOption {
 	}
 }
 
+// NewRedirectHandler creates a new redirect handler.
 func NewRedirectHandler(opts ...RedirectOption) (*RedirectHandler, error) {
 	options := &redirectOptions{}
 	for _, opt := range opts {
@@ -54,14 +59,17 @@ func NewRedirectHandler(opts ...RedirectOption) (*RedirectHandler, error) {
 	return &RedirectHandler{usecase: options.usecase, logger: options.logger}, nil
 }
 
+// Pattern is the pattern for the redirect.
 func (h *RedirectHandler) Pattern() string {
 	return "/{id}"
 }
 
+// Method is the method for the redirect.
 func (h *RedirectHandler) Method() string {
 	return http.MethodGet
 }
 
+// HandlerFunc is the handler func for the redirect.
 func (h *RedirectHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, ok := r.Context().Value(middleware.UserIDKey).(string)

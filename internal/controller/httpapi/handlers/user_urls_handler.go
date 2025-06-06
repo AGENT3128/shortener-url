@@ -18,14 +18,17 @@ type userURLsOptions struct {
 	baseURL string
 }
 
+// UserURLsOption is the option for the user URLs handler.
 type UserURLsOption func(options *userURLsOptions) error
 
+// UserURLsHandler is the handler for the user URLs.
 type UserURLsHandler struct {
 	usecase UserURLGetter
 	logger  *zap.Logger
 	baseURL string
 }
 
+// WithUserURLsBaseURL is the option for the user URLs handler to set the base URL.
 func WithUserURLsBaseURL(baseURL string) UserURLsOption {
 	return func(options *userURLsOptions) error {
 		options.baseURL = baseURL
@@ -33,6 +36,7 @@ func WithUserURLsBaseURL(baseURL string) UserURLsOption {
 	}
 }
 
+// WithUserURLsUsecase is the option for the user URLs handler to set the usecase.
 func WithUserURLsUsecase(usecase UserURLGetter) UserURLsOption {
 	return func(options *userURLsOptions) error {
 		options.usecase = usecase
@@ -40,6 +44,7 @@ func WithUserURLsUsecase(usecase UserURLGetter) UserURLsOption {
 	}
 }
 
+// WithUserURLsLogger is the option for the user URLs handler to set the logger.
 func WithUserURLsLogger(logger *zap.Logger) UserURLsOption {
 	return func(options *userURLsOptions) error {
 		options.logger = logger.With(zap.String("handler", "UserURLsHandler"))
@@ -47,6 +52,7 @@ func WithUserURLsLogger(logger *zap.Logger) UserURLsOption {
 	}
 }
 
+// NewUserURLsHandler creates a new user URLs handler.
 func NewUserURLsHandler(opts ...UserURLsOption) (*UserURLsHandler, error) {
 	options := &userURLsOptions{}
 	for _, opt := range opts {
@@ -67,14 +73,17 @@ func NewUserURLsHandler(opts ...UserURLsOption) (*UserURLsHandler, error) {
 	}, nil
 }
 
+// Pattern is the pattern for the user URLs.
 func (h *UserURLsHandler) Pattern() string {
 	return "/api/user/urls"
 }
 
+// Method is the method for the user URLs.
 func (h *UserURLsHandler) Method() string {
 	return http.MethodGet
 }
 
+// HandlerFunc is the handler func for the user URLs.
 func (h *UserURLsHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.UserIDKey).(string)

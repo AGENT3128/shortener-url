@@ -18,8 +18,10 @@ type options struct {
 	healthCheckPeriod time.Duration
 }
 
+// Option is the option for the database.
 type Option func(options *options) error
 
+// WithMaxConns is the option for the database to set the maximum number of connections.
 func WithMaxConns(maxConns int) Option {
 	return func(options *options) error {
 		options.maxConns = maxConns
@@ -27,6 +29,7 @@ func WithMaxConns(maxConns int) Option {
 	}
 }
 
+// WithMinConns is the option for the database to set the minimum number of connections.
 func WithMinConns(minConns int) Option {
 	return func(options *options) error {
 		options.minConns = minConns
@@ -34,6 +37,7 @@ func WithMinConns(minConns int) Option {
 	}
 }
 
+// WithConnMaxLifetime is the option for the database to set the connection max lifetime.
 func WithConnMaxLifetime(connMaxLifetime time.Duration) Option {
 	return func(options *options) error {
 		options.connMaxLifetime = connMaxLifetime
@@ -41,6 +45,7 @@ func WithConnMaxLifetime(connMaxLifetime time.Duration) Option {
 	}
 }
 
+// WithConnMaxIdleTime is the option for the database to set the connection max idle time.
 func WithConnMaxIdleTime(connMaxIdleTime time.Duration) Option {
 	return func(options *options) error {
 		options.connMaxIdleTime = connMaxIdleTime
@@ -48,6 +53,7 @@ func WithConnMaxIdleTime(connMaxIdleTime time.Duration) Option {
 	}
 }
 
+// WithHealthCheckPeriod is the option for the database to set the health check period.
 func WithHealthCheckPeriod(healthCheckPeriod time.Duration) Option {
 	return func(options *options) error {
 		options.healthCheckPeriod = healthCheckPeriod
@@ -55,10 +61,12 @@ func WithHealthCheckPeriod(healthCheckPeriod time.Duration) Option {
 	}
 }
 
+// Database is the database connection pool.
 type Database struct {
 	Pool *pgxpool.Pool
 }
 
+// New creates a new database connection pool.
 func New(ctx context.Context, databaseURL string, opts ...Option) (*Database, error) {
 	options := &options{}
 	for _, opt := range opts {
@@ -90,6 +98,7 @@ func New(ctx context.Context, databaseURL string, opts ...Option) (*Database, er
 	return &Database{Pool: pool}, nil
 }
 
+// Close closes the database connection pool.
 func (d *Database) Close() {
 	d.Pool.Close()
 }

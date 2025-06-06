@@ -18,8 +18,10 @@ type shortenOptions struct {
 	usecase URLSaver
 }
 
+// ShortenOption is the option for the shorten handler.
 type ShortenOption func(options *shortenOptions) error
 
+// WithShortenBaseURL is the option for the shorten handler to set the base URL.
 func WithShortenBaseURL(baseURL string) ShortenOption {
 	return func(options *shortenOptions) error {
 		options.baseURL = baseURL
@@ -27,6 +29,7 @@ func WithShortenBaseURL(baseURL string) ShortenOption {
 	}
 }
 
+// WithShortenLogger is the option for the shorten handler to set the logger.
 func WithShortenLogger(logger *zap.Logger) ShortenOption {
 	return func(options *shortenOptions) error {
 		options.logger = logger
@@ -34,6 +37,7 @@ func WithShortenLogger(logger *zap.Logger) ShortenOption {
 	}
 }
 
+// WithShortenUsecase is the option for the shorten handler to set the usecase.
 func WithShortenUsecase(usecase URLSaver) ShortenOption {
 	return func(options *shortenOptions) error {
 		options.usecase = usecase
@@ -41,6 +45,7 @@ func WithShortenUsecase(usecase URLSaver) ShortenOption {
 	}
 }
 
+// ShortenHandler is the handler for the shorten.
 type ShortenHandler struct {
 	baseURL string
 	logger  *zap.Logger
@@ -83,6 +88,7 @@ func (h *ShortenHandler) Method() string {
 	return http.MethodPost
 }
 
+// HandlerFunc is the handler func for the shorten.
 func (h *ShortenHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.UserIDKey).(string)

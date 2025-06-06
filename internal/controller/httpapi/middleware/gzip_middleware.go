@@ -25,10 +25,12 @@ type gzipWriter struct {
 	writer *gzip.Writer
 }
 
+// Write writes the response to the client.
 func (g *gzipWriter) Write(data []byte) (int, error) {
 	return g.writer.Write(data)
 }
 
+// GzipMiddleware is the middleware for the gzip.
 func GzipMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

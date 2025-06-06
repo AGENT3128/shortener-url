@@ -15,13 +15,16 @@ type userURLsDeleteOptions struct {
 	logger  *zap.Logger
 }
 
+// UserURLsDeleteOption is the option for the user URLs delete handler.
 type UserURLsDeleteOption func(options *userURLsDeleteOptions) error
 
+// UserURLsDeleteHandler is the handler for the user URLs delete.
 type UserURLsDeleteHandler struct {
 	usecase UserURLDeleter
 	logger  *zap.Logger
 }
 
+// WithUserURLsDeleteUsecase is the option for the user URLs delete handler to set the usecase.
 func WithUserURLsDeleteUsecase(usecase UserURLDeleter) UserURLsDeleteOption {
 	return func(options *userURLsDeleteOptions) error {
 		options.usecase = usecase
@@ -29,6 +32,7 @@ func WithUserURLsDeleteUsecase(usecase UserURLDeleter) UserURLsDeleteOption {
 	}
 }
 
+// WithUserURLsDeleteLogger is the option for the user URLs delete handler to set the logger.
 func WithUserURLsDeleteLogger(logger *zap.Logger) UserURLsDeleteOption {
 	return func(options *userURLsDeleteOptions) error {
 		options.logger = logger.With(zap.String("handler", "UserURLsDeleteHandler"))
@@ -36,6 +40,7 @@ func WithUserURLsDeleteLogger(logger *zap.Logger) UserURLsDeleteOption {
 	}
 }
 
+// NewUserURLsDeleteHandler creates a new user URLs delete handler.
 func NewUserURLsDeleteHandler(opts ...UserURLsDeleteOption) (*UserURLsDeleteHandler, error) {
 	options := &userURLsDeleteOptions{}
 	for _, opt := range opts {
@@ -55,13 +60,17 @@ func NewUserURLsDeleteHandler(opts ...UserURLsDeleteOption) (*UserURLsDeleteHand
 	}, nil
 }
 
+// Pattern is the pattern for the user URLs delete.
 func (h *UserURLsDeleteHandler) Pattern() string {
 	return "/api/user/urls"
 }
+
+// Method is the method for the user URLs delete.
 func (h *UserURLsDeleteHandler) Method() string {
 	return http.MethodDelete
 }
 
+// HandlerFunc is the handler func for the user URLs delete.
 func (h *UserURLsDeleteHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.UserIDKey).(string)

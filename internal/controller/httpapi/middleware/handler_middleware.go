@@ -12,12 +12,15 @@ type optionsMiddlewareLogger struct {
 	logger *zap.Logger
 }
 
+// OptionMiddlewareLogger is the option for the middleware logger.
 type OptionMiddlewareLogger func(options *optionsMiddlewareLogger) error
 
+// Logger is the logger for the middleware.
 type Logger struct {
 	logger *zap.Logger
 }
 
+// WithMiddlewareLogger is the option for the middleware logger.
 func WithMiddlewareLogger(logger *zap.Logger) OptionMiddlewareLogger {
 	return func(options *optionsMiddlewareLogger) error {
 		options.logger = logger.With(zap.String("middleware", "logger"))
@@ -25,6 +28,7 @@ func WithMiddlewareLogger(logger *zap.Logger) OptionMiddlewareLogger {
 	}
 }
 
+// NewHandlerLogger creates a new handler logger.
 func NewHandlerLogger(opts ...OptionMiddlewareLogger) (*Logger, error) {
 	options := &optionsMiddlewareLogger{}
 	for _, opt := range opts {
@@ -38,6 +42,7 @@ func NewHandlerLogger(opts ...OptionMiddlewareLogger) (*Logger, error) {
 	return &Logger{logger: options.logger}, nil
 }
 
+// Handler is the handler for the logger.
 func (h *Logger) Handler() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -70,11 +75,13 @@ type responseWriter struct {
 	size       int
 }
 
+// WriteHeader writes the header to the client.
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
 }
 
+// Write writes the response to the client.
 func (rw *responseWriter) Write(b []byte) (int, error) {
 	size, err := rw.ResponseWriter.Write(b)
 	rw.size += size

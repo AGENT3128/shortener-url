@@ -9,12 +9,14 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/entity"
 )
 
+// MemStorage is the memory storage for the URL.
 type MemStorage struct {
 	mu     sync.RWMutex
 	urls   map[string]entity.URL
 	logger *zap.Logger
 }
 
+// NewMemStorage creates a new MemStorage.
 func NewMemStorage(logger *zap.Logger) *MemStorage {
 	logger = logger.With(zap.String("storage", "memory"))
 	return &MemStorage{
@@ -23,6 +25,7 @@ func NewMemStorage(logger *zap.Logger) *MemStorage {
 	}
 }
 
+// Add adds a URL.
 func (m *MemStorage) Add(_ context.Context, userID, shortURL, originalURL string) (string, error) {
 	const method = "Add"
 	m.mu.Lock()
@@ -37,6 +40,7 @@ func (m *MemStorage) Add(_ context.Context, userID, shortURL, originalURL string
 	return shortURL, nil
 }
 
+// GetByShortURL gets the original URL by the short URL.
 func (m *MemStorage) GetByShortURL(_ context.Context, shortURL string) (string, error) {
 	const method = "GetByShortURL"
 	m.mu.RLock()
@@ -58,6 +62,7 @@ func (m *MemStorage) GetByShortURL(_ context.Context, shortURL string) (string, 
 	return url.OriginalURL, nil
 }
 
+// GetByOriginalURL gets the short URL by the original URL.
 func (m *MemStorage) GetByOriginalURL(_ context.Context, originalURL string) (string, error) {
 	const method = "GetByOriginalURL"
 	m.mu.RLock()
@@ -72,6 +77,7 @@ func (m *MemStorage) GetByOriginalURL(_ context.Context, originalURL string) (st
 	return "", entity.ErrURLNotFound
 }
 
+// AddBatch adds a batch of URLs.
 func (m *MemStorage) AddBatch(_ context.Context, userID string, urls []entity.URL) error {
 	const method = "AddBatch"
 	m.mu.Lock()
@@ -94,11 +100,13 @@ func (m *MemStorage) AddBatch(_ context.Context, userID string, urls []entity.UR
 	return nil
 }
 
+// Ping pings the memory storage.
 func (m *MemStorage) Ping(_ context.Context) error {
 	// not needed for memory storage
 	return nil
 }
 
+// GetUserURLs gets user URLs.
 func (m *MemStorage) GetUserURLs(_ context.Context, userID string) ([]entity.URL, error) {
 	const method = "GetUserURLs"
 	m.mu.RLock()

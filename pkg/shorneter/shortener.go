@@ -5,11 +5,15 @@ import (
 	"math/big"
 )
 
+// Constants for the shortener.
 const (
+	// CHARSET is the charset for the short ID.
 	CHARSET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	// LENGTH is the length of the short ID.
 	LENGTH  = 8
 )
 
+// GenerateShortID generates a short ID.
 func GenerateShortID() string {
 	result := make([]byte, LENGTH)
 	charsetLength := big.NewInt(int64(len(CHARSET)))
@@ -25,6 +29,7 @@ func GenerateShortID() string {
 	return string(result)
 }
 
+// GenerateShortIDOptimized generates a short ID optimized for performance.
 func GenerateShortIDOptimized() (string, error) {
 	result := make([]byte, LENGTH)
 	randomBytes := make([]byte, LENGTH)

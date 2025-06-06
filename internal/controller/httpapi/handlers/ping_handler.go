@@ -14,13 +14,16 @@ type pingOptions struct {
 	logger  *zap.Logger
 }
 
+// PingOption is the option for the ping handler.
 type PingOption func(options *pingOptions) error
 
+// PingHandler is the handler for the ping.
 type PingHandler struct {
 	usecase Pinger
 	logger  *zap.Logger
 }
 
+// WithPingUsecase is the option for the ping handler to set the usecase.
 func WithPingUsecase(usecase Pinger) PingOption {
 	return func(options *pingOptions) error {
 		options.usecase = usecase
@@ -28,6 +31,7 @@ func WithPingUsecase(usecase Pinger) PingOption {
 	}
 }
 
+// WithPingLogger is the option for the ping handler to set the logger.
 func WithPingLogger(logger *zap.Logger) PingOption {
 	return func(options *pingOptions) error {
 		options.logger = logger.With(zap.String("handler", "PingHandler"))
@@ -35,6 +39,7 @@ func WithPingLogger(logger *zap.Logger) PingOption {
 	}
 }
 
+// NewPingHandler creates a new ping handler.
 func NewPingHandler(opts ...PingOption) (*PingHandler, error) {
 	options := &pingOptions{}
 	for _, opt := range opts {
@@ -54,14 +59,17 @@ func NewPingHandler(opts ...PingOption) (*PingHandler, error) {
 	}, nil
 }
 
+// Pattern is the pattern for the ping.
 func (h *PingHandler) Pattern() string {
 	return "/ping"
 }
 
+// Method is the method for the ping.
 func (h *PingHandler) Method() string {
 	return http.MethodGet
 }
 
+// HandlerFunc is the handler func for the ping.
 func (h *PingHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, ok := r.Context().Value(middleware.UserIDKey).(string)

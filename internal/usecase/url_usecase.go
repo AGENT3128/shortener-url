@@ -20,14 +20,17 @@ type options struct {
 	worker     *worker.DeleteWorker
 }
 
+// Option is the option for the URLUsecase.
 type Option func(options *options) error
 
+// URLUsecase is the usecase for the URL.
 type URLUsecase struct {
 	repository URLRepository
 	logger     *zap.Logger
 	worker     *worker.DeleteWorker
 }
 
+// NewURLUsecase creates a new URLUsecase.
 func NewURLUsecase(opts ...Option) (*URLUsecase, error) {
 	options := &options{}
 	for _, opt := range opts {
@@ -48,6 +51,7 @@ func NewURLUsecase(opts ...Option) (*URLUsecase, error) {
 	}, nil
 }
 
+// WithDeleteWorker is the option for the URLUsecase to set the delete worker.
 func WithDeleteWorker(worker *worker.DeleteWorker) Option {
 	return func(options *options) error {
 		options.worker = worker
@@ -55,6 +59,7 @@ func WithDeleteWorker(worker *worker.DeleteWorker) Option {
 	}
 }
 
+// WithURLUsecaseRepository is the option for the URLUsecase to set the repository.
 func WithURLUsecaseRepository(repository URLRepository) Option {
 	return func(options *options) error {
 		options.repository = repository
@@ -62,6 +67,7 @@ func WithURLUsecaseRepository(repository URLRepository) Option {
 	}
 }
 
+// WithURLUsecaseLogger is the option for the URLUsecase to set the logger.
 func WithURLUsecaseLogger(logger *zap.Logger) Option {
 	return func(options *options) error {
 		options.logger = logger.With(zap.String("usecase", "URLUsecase"))
@@ -69,12 +75,14 @@ func WithURLUsecaseLogger(logger *zap.Logger) Option {
 	}
 }
 
+// Shutdown shuts down the URLUsecase.
 func (uc *URLUsecase) Shutdown() {
 	if uc.worker != nil {
 		uc.worker.Shutdown()
 	}
 }
 
+// Add adds a URL.
 func (uc *URLUsecase) Add(ctx context.Context, userID string, originalURL string) (string, error) {
 	shortURL, err := shorneter.GenerateShortIDOptimized()
 	if err != nil {
@@ -97,6 +105,7 @@ func (uc *URLUsecase) Add(ctx context.Context, userID string, originalURL string
 	return shortURL, nil
 }
 
+// GetByOriginalURL gets the short URL by the original URL.
 func (uc *URLUsecase) GetByOriginalURL(ctx context.Context, originalURL string) (string, error) {
 	shortURL, err := uc.repository.GetByOriginalURL(ctx, originalURL)
 	if err != nil {
@@ -108,6 +117,7 @@ func (uc *URLUsecase) GetByOriginalURL(ctx context.Context, originalURL string) 
 	return shortURL, nil
 }
 
+// GetByShortURL gets the original URL by the short URL.
 func (uc *URLUsecase) GetByShortURL(ctx context.Context, shortURL string) (string, error) {
 	uc.logger.Info("searching for short URL", zap.String("short_url", shortURL))
 	originalURL, err := uc.repository.GetByShortURL(ctx, shortURL)
@@ -118,10 +128,12 @@ func (uc *URLUsecase) GetByShortURL(ctx context.Context, shortURL string) (strin
 	return originalURL, nil
 }
 
+// Ping pings the repository.
 func (uc *URLUsecase) Ping(ctx context.Context) error {
 	return uc.repository.Ping(ctx)
 }
 
+// AddBatch adds a batch of URLs.
 func (uc *URLUsecase) AddBatch(ctx context.Context, userID string, urls []entity.URL) ([]entity.URL, error) {
 	uc.logger.Info("adding batch of URLs", zap.Any("urls", urls))
 	uniqueURLs := make([]entity.URL, 0, len(urls))
@@ -158,10 +170,12 @@ func (uc *URLUsecase) AddBatch(ctx context.Context, userID string, urls []entity
 	return result, uc.repository.AddBatch(ctx, userID, uniqueURLs)
 }
 
+// GetUserURLs gets user URLs.
 func (uc *URLUsecase) GetUserURLs(ctx context.Context, userID string) ([]entity.URL, error) {
 	return uc.repository.GetUserURLs(ctx, userID)
 }
 
+// DeleteUserURLs deletes user URLs.
 func (uc *URLUsecase) DeleteUserURLs(_ context.Context, userID string, shortURLs []string) error {
 	uc.logger.Info("deleting user URLs", zap.String("userID", userID), zap.Any("shortURLs", shortURLs))
 	if uc.worker != nil {

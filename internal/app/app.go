@@ -25,31 +25,38 @@ import (
 	"github.com/AGENT3128/shortener-url/pkg/database"
 )
 
+// URLSaver is an interface that defines the methods for saving a URL.
 type URLSaver interface {
 	Add(ctx context.Context, userID, shortURL, originalURL string) (string, error)
 }
 
+// URLGetter is an interface that defines the methods for getting a URL.
 type URLGetter interface {
 	GetByOriginalURL(ctx context.Context, originalURL string) (string, error)
 	GetByShortURL(ctx context.Context, shortURL string) (string, error)
 }
 
+// Pinger is an interface that defines the method for pinging the database.
 type Pinger interface {
 	Ping(ctx context.Context) error
 }
 
+// BatchURLSaver is an interface that defines the method for saving a batch of URLs.
 type BatchURLSaver interface {
 	AddBatch(ctx context.Context, userID string, urls []entity.URL) error
 }
 
+// UserURLGetter is an interface that defines the method for getting a user's URLs.
 type UserURLGetter interface {
 	GetUserURLs(ctx context.Context, userID string) ([]entity.URL, error)
 }
 
+// URLDeleter is an interface that defines the method for deleting a URL.
 type URLDeleter interface {
 	MarkDeletedBatch(ctx context.Context, userID string, shortURLs []string) error
 }
 
+// Repository is an interface that defines the methods for the repository.
 type Repository interface {
 	URLSaver
 	URLGetter
@@ -59,6 +66,7 @@ type Repository interface {
 	URLDeleter
 }
 
+// Run is the main function for running the application.
 func Run(cfg *config.Config) error {
 	logger, err := logger.NewLogger(cfg.LogLevel)
 	if err != nil {

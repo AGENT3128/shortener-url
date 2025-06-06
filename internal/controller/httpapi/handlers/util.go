@@ -5,12 +5,14 @@ import (
 	"net/http"
 )
 
+// Response is the response for the JSON.
 type Response struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
 	Data    any    `json:"data"`
 }
 
+// JSONResponse is the response for the JSON.
 func JSONResponse(w http.ResponseWriter, status int, data any) {
 	response := Response{
 		Status:  status,
@@ -24,6 +26,7 @@ func JSONResponse(w http.ResponseWriter, status int, data any) {
 	}
 }
 
+// TextResponse is the response for the text.
 func TextResponse(w http.ResponseWriter, status int, data string) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(status)

@@ -17,8 +17,11 @@ type options struct {
 	baseURL    string
 	URLusecase URLusecase
 }
+
+// Option is the option for the router.
 type Option func(options *options) error
 
+// WithLogger is the option for the router to set the logger.
 func WithLogger(logger *zap.Logger) Option {
 	return func(options *options) error {
 		options.logger = logger
@@ -26,6 +29,7 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
+// WithBaseURL is the option for the router to set the base URL.
 func WithBaseURL(baseURL string) Option {
 	return func(options *options) error {
 		options.baseURL = baseURL
@@ -33,6 +37,7 @@ func WithBaseURL(baseURL string) Option {
 	}
 }
 
+// WithURLUsecase is the option for the router to set the URL usecase.
 func WithURLUsecase(usecase URLusecase) Option {
 	return func(options *options) error {
 		options.URLusecase = usecase
@@ -40,6 +45,7 @@ func WithURLUsecase(usecase URLusecase) Option {
 	}
 }
 
+// NewRouter creates a new router.
 func NewRouter(opts ...Option) (*chi.Mux, error) {
 	options := &options{}
 	for _, opt := range opts {
