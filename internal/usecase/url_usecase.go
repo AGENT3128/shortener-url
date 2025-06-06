@@ -76,8 +76,11 @@ func (uc *URLUsecase) Shutdown() {
 }
 
 func (uc *URLUsecase) Add(ctx context.Context, userID string, originalURL string) (string, error) {
-	shortURL := shorneter.GenerateShortID()
-	shortURL, err := uc.repository.Add(ctx, userID, shortURL, originalURL)
+	shortURL, err := shorneter.GenerateShortIDOptimized()
+	if err != nil {
+		return "", err
+	}
+	shortURL, err = uc.repository.Add(ctx, userID, shortURL, originalURL)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -129,7 +132,10 @@ func (uc *URLUsecase) AddBatch(ctx context.Context, userID string, urls []entity
 		existingURL, err := uc.GetByOriginalURL(ctx, url.OriginalURL)
 		if err != nil {
 			if errors.Is(err, entity.ErrURLNotFound) {
-				shortURL := shorneter.GenerateShortID()
+				shortURL, err := shorneter.GenerateShortIDOptimized()
+				if err != nil {
+					return nil, err
+				}
 				uniqueURLs = append(uniqueURLs, entity.URL{
 					OriginalURL: url.OriginalURL,
 					ShortURL:    shortURL,
