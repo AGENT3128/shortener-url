@@ -19,7 +19,7 @@ type batchShortenOptions struct {
 	baseURL string
 }
 
-type batchShortenOption func(options *batchShortenOptions) error
+type BatchShortenOption func(options *batchShortenOptions) error
 
 type BatchShortenHandler struct {
 	usecase BatchURLSaver
@@ -27,28 +27,28 @@ type BatchShortenHandler struct {
 	baseURL string
 }
 
-func WithBatchShortenBaseURL(baseURL string) batchShortenOption {
+func WithBatchShortenBaseURL(baseURL string) BatchShortenOption {
 	return func(options *batchShortenOptions) error {
 		options.baseURL = baseURL
 		return nil
 	}
 }
 
-func WithBatchShortenUsecase(usecase BatchURLSaver) batchShortenOption {
+func WithBatchShortenUsecase(usecase BatchURLSaver) BatchShortenOption {
 	return func(options *batchShortenOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
-func WithBatchShortenLogger(logger *zap.Logger) batchShortenOption {
+func WithBatchShortenLogger(logger *zap.Logger) BatchShortenOption {
 	return func(options *batchShortenOptions) error {
 		options.logger = logger.With(zap.String("handler", "BatchShortenHandler"))
 		return nil
 	}
 }
 
-func NewBatchShortenHandler(opts ...batchShortenOption) (*BatchShortenHandler, error) {
+func NewBatchShortenHandler(opts ...BatchShortenOption) (*BatchShortenHandler, error) {
 	options := &batchShortenOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -94,8 +94,8 @@ func (h *BatchShortenHandler) HandlerFunc() http.HandlerFunc {
 		defer r.Body.Close()
 
 		var requests []dto.ShortenBatchRequest
-		if err := json.Unmarshal(body, &requests); err != nil {
-			h.logger.Error("Failed to unmarshal request body", zap.Error(err))
+		if errUnmarshal := json.Unmarshal(body, &requests); errUnmarshal != nil {
+			h.logger.Error("Failed to unmarshal request body", zap.Error(errUnmarshal))
 			JSONResponse(w, http.StatusBadRequest, "Failed to unmarshal request body")
 			return
 		}
@@ -133,7 +133,9 @@ func (h *BatchShortenHandler) HandlerFunc() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(responses)
+		if errEncode := json.NewEncoder(w).Encode(responses); errEncode != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }
 

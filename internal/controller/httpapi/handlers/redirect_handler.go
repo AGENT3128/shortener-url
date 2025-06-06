@@ -21,23 +21,23 @@ type redirectOptions struct {
 	logger  *zap.Logger
 }
 
-type redirectOption func(options *redirectOptions) error
+type RedirectOption func(options *redirectOptions) error
 
-func WithRedirectUsecase(usecase URLGetter) redirectOption {
+func WithRedirectUsecase(usecase URLGetter) RedirectOption {
 	return func(options *redirectOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
-func WithRedirectLogger(logger *zap.Logger) redirectOption {
+func WithRedirectLogger(logger *zap.Logger) RedirectOption {
 	return func(options *redirectOptions) error {
 		options.logger = logger.With(zap.String("handler", "RedirectHandler"))
 		return nil
 	}
 }
 
-func NewRedirectHandler(opts ...redirectOption) (*RedirectHandler, error) {
+func NewRedirectHandler(opts ...RedirectOption) (*RedirectHandler, error) {
 	options := &redirectOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {

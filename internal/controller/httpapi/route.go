@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	//nolint:gosec // pprof is used for debugging
 	_ "net/http/pprof"
 
 	"github.com/go-chi/chi/v5"
@@ -61,66 +62,6 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		return nil, err
 	}
 
-	// handlers
-	shortenHandler, err := handlers.NewShortenHandler(
-		handlers.WithShortenBaseURL(options.baseURL),
-		handlers.WithShortenUsecase(options.URLusecase),
-		handlers.WithShortenLogger(options.logger),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	redirectHandler, err := handlers.NewRedirectHandler(
-		handlers.WithRedirectUsecase(options.URLusecase),
-		handlers.WithRedirectLogger(options.logger),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	apiShortenHandler, err := handlers.NewAPIShortenHandler(
-		handlers.WithAPIShortenUsecase(options.URLusecase),
-		handlers.WithAPIShortenLogger(options.logger),
-		handlers.WithAPIShortenBaseURL(options.baseURL),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	pingHandler, err := handlers.NewPingHandler(
-		handlers.WithPingUsecase(options.URLusecase),
-		handlers.WithPingLogger(options.logger),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	batchShortenHandler, err := handlers.NewBatchShortenHandler(
-		handlers.WithBatchShortenUsecase(options.URLusecase),
-		handlers.WithBatchShortenLogger(options.logger),
-		handlers.WithBatchShortenBaseURL(options.baseURL),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	userURLsHandler, err := handlers.NewUserURLsHandler(
-		handlers.WithUserURLsBaseURL(options.baseURL),
-		handlers.WithUserURLsUsecase(options.URLusecase),
-		handlers.WithUserURLsLogger(options.logger),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	userURLsDeleteHandler, err := handlers.NewUserURLsDeleteHandler(
-		handlers.WithUserURLsDeleteUsecase(options.URLusecase),
-		handlers.WithUserURLsDeleteLogger(options.logger),
-	)
-	if err != nil {
-		return nil, err
-	}
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
@@ -130,6 +71,74 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 	// pprof
 	router.Mount("/debug", middleware.Profiler())
 
+	err = initializeHandlers(router, options)
+	if err != nil {
+		return nil, err
+	}
+	return router, nil
+}
+
+func initializeHandlers(router *chi.Mux, options *options) error {
+	// handlers
+	shortenHandler, err := handlers.NewShortenHandler(
+		handlers.WithShortenBaseURL(options.baseURL),
+		handlers.WithShortenUsecase(options.URLusecase),
+		handlers.WithShortenLogger(options.logger),
+	)
+	if err != nil {
+		return err
+	}
+
+	redirectHandler, err := handlers.NewRedirectHandler(
+		handlers.WithRedirectUsecase(options.URLusecase),
+		handlers.WithRedirectLogger(options.logger),
+	)
+	if err != nil {
+		return err
+	}
+
+	apiShortenHandler, err := handlers.NewAPIShortenHandler(
+		handlers.WithAPIShortenUsecase(options.URLusecase),
+		handlers.WithAPIShortenLogger(options.logger),
+		handlers.WithAPIShortenBaseURL(options.baseURL),
+	)
+	if err != nil {
+		return err
+	}
+
+	pingHandler, err := handlers.NewPingHandler(
+		handlers.WithPingUsecase(options.URLusecase),
+		handlers.WithPingLogger(options.logger),
+	)
+	if err != nil {
+		return err
+	}
+
+	batchShortenHandler, err := handlers.NewBatchShortenHandler(
+		handlers.WithBatchShortenUsecase(options.URLusecase),
+		handlers.WithBatchShortenLogger(options.logger),
+		handlers.WithBatchShortenBaseURL(options.baseURL),
+	)
+	if err != nil {
+		return err
+	}
+
+	userURLsHandler, err := handlers.NewUserURLsHandler(
+		handlers.WithUserURLsBaseURL(options.baseURL),
+		handlers.WithUserURLsUsecase(options.URLusecase),
+		handlers.WithUserURLsLogger(options.logger),
+	)
+	if err != nil {
+		return err
+	}
+
+	userURLsDeleteHandler, err := handlers.NewUserURLsDeleteHandler(
+		handlers.WithUserURLsDeleteUsecase(options.URLusecase),
+		handlers.WithUserURLsDeleteLogger(options.logger),
+	)
+	if err != nil {
+		return err
+	}
 	h := []handler{
 		shortenHandler,
 		redirectHandler,
@@ -143,5 +152,5 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 	for _, h := range h {
 		router.Method(h.Method(), h.Pattern(), h.HandlerFunc())
 	}
-	return router, nil
+	return nil
 }

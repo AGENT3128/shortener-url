@@ -12,20 +12,20 @@ type optionsMiddlewareLogger struct {
 	logger *zap.Logger
 }
 
-type optionMiddlewareLogger func(options *optionsMiddlewareLogger) error
+type OptionMiddlewareLogger func(options *optionsMiddlewareLogger) error
 
-type MiddlewareLogger struct {
+type Logger struct {
 	logger *zap.Logger
 }
 
-func WithMiddlewareLogger(logger *zap.Logger) optionMiddlewareLogger {
+func WithMiddlewareLogger(logger *zap.Logger) OptionMiddlewareLogger {
 	return func(options *optionsMiddlewareLogger) error {
 		options.logger = logger.With(zap.String("middleware", "logger"))
 		return nil
 	}
 }
 
-func NewHandlerLogger(opts ...optionMiddlewareLogger) (*MiddlewareLogger, error) {
+func NewHandlerLogger(opts ...OptionMiddlewareLogger) (*Logger, error) {
 	options := &optionsMiddlewareLogger{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -35,10 +35,10 @@ func NewHandlerLogger(opts ...optionMiddlewareLogger) (*MiddlewareLogger, error)
 	if options.logger == nil {
 		return nil, errors.New("logger is required")
 	}
-	return &MiddlewareLogger{logger: options.logger}, nil
+	return &Logger{logger: options.logger}, nil
 }
 
-func (h *MiddlewareLogger) Handler() func(http.Handler) http.Handler {
+func (h *Logger) Handler() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()

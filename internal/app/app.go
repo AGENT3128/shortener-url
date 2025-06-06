@@ -77,8 +77,8 @@ func Run(cfg *config.Config) error {
 
 	var db *database.Database
 	if cfg.DatabaseDSN != "" {
-		var err error
-		db, err = database.New(
+		var errDB error
+		db, errDB = database.New(
 			ctx,
 			cfg.DatabaseDSN,
 			database.WithConnMaxIdleTime(cfg.DatabaseConnMaxIdleTime),
@@ -87,8 +87,8 @@ func Run(cfg *config.Config) error {
 			database.WithMinConns(cfg.DatabaseMinConns),
 			database.WithHealthCheckPeriod(cfg.DatabaseHealthCheckPeriod),
 		)
-		if err != nil {
-			return fmt.Errorf("failed to create database: %w", err)
+		if errDB != nil {
+			return fmt.Errorf("failed to create database: %w", errDB)
 		}
 	}
 
@@ -111,8 +111,6 @@ func Run(cfg *config.Config) error {
 	deleteWorker := worker.NewDeleteWorker(
 		urlRepository,
 		logger,
-		worker.WithBatchSize(50),
-		worker.WithFlushInterval(500*time.Millisecond),
 	)
 
 	// usecases

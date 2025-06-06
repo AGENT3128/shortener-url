@@ -18,23 +18,23 @@ type shortenOptions struct {
 	usecase URLSaver
 }
 
-type shortenOption func(options *shortenOptions) error
+type ShortenOption func(options *shortenOptions) error
 
-func WithShortenBaseURL(baseURL string) shortenOption {
+func WithShortenBaseURL(baseURL string) ShortenOption {
 	return func(options *shortenOptions) error {
 		options.baseURL = baseURL
 		return nil
 	}
 }
 
-func WithShortenLogger(logger *zap.Logger) shortenOption {
+func WithShortenLogger(logger *zap.Logger) ShortenOption {
 	return func(options *shortenOptions) error {
 		options.logger = logger
 		return nil
 	}
 }
 
-func WithShortenUsecase(usecase URLSaver) shortenOption {
+func WithShortenUsecase(usecase URLSaver) ShortenOption {
 	return func(options *shortenOptions) error {
 		options.usecase = usecase
 		return nil
@@ -48,7 +48,7 @@ type ShortenHandler struct {
 }
 
 // NewShortenHandler creates a new instance of ShortenHandler.
-func NewShortenHandler(opts ...shortenOption) (*ShortenHandler, error) {
+func NewShortenHandler(opts ...ShortenOption) (*ShortenHandler, error) {
 	options := &shortenOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {

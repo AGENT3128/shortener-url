@@ -40,12 +40,12 @@ func TestMemStorage_Add(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			shortURL, err := repo.Add(t.Context(), tt.userID, tt.shortURL, tt.originalURL)
+			shortURL, errAdd := repo.Add(t.Context(), tt.userID, tt.shortURL, tt.originalURL)
 			if tt.wantErr {
-				require.Error(t, err)
+				require.Error(t, errAdd)
 				return
 			}
-			require.NoError(t, err)
+			require.NoError(t, errAdd)
 			require.Equal(t, tt.shortURL, shortURL)
 		})
 	}
@@ -85,8 +85,8 @@ func TestMemStorage_GetByShortURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.GetByShortURL(t.Context(), tt.shortURL)
-			assert.Equal(t, tt.wantError, err)
+			got, errGet := repo.GetByShortURL(t.Context(), tt.shortURL)
+			assert.Equal(t, tt.wantError, errGet)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -126,8 +126,8 @@ func TestMemStorage_GetByOriginalURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.GetByOriginalURL(t.Context(), tt.originalURL)
-			assert.Equal(t, tt.wantError, err)
+			got, errGet := repo.GetByOriginalURL(t.Context(), tt.originalURL)
+			assert.Equal(t, tt.wantError, errGet)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -155,8 +155,8 @@ func TestMemStorage_AddBatch(t *testing.T) {
 
 	// Verify each URL was added correctly
 	for _, url := range urls {
-		got, err := repo.GetByShortURL(t.Context(), url.ShortURL)
-		require.NoError(t, err)
+		got, errGet := repo.GetByShortURL(t.Context(), url.ShortURL)
+		require.NoError(t, errGet)
 		assert.Equal(t, url.OriginalURL, got)
 	}
 }
@@ -211,12 +211,12 @@ func TestMemStorage_GetUserURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.GetUserURLs(t.Context(), tt.userID)
+			got, errGet := repo.GetUserURLs(t.Context(), tt.userID)
 			if tt.wantErr {
-				require.Error(t, err)
+				require.Error(t, errGet)
 				return
 			}
-			require.NoError(t, err)
+			require.NoError(t, errGet)
 			assert.Len(t, got, tt.want)
 		})
 	}

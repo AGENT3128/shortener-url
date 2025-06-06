@@ -13,7 +13,7 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/entity"
 )
 
-type FileStorage struct {
+type Storage struct {
 	file     *os.File
 	mu       sync.RWMutex
 	urls     map[string]URLData
@@ -34,28 +34,28 @@ type URLRecord struct {
 	OriginalURL string `json:"original_url"`
 }
 
-func NewFileStorage(path string, logger *zap.Logger) (*FileStorage, error) {
+func NewFileStorage(path string, logger *zap.Logger) (*Storage, error) {
 	logger = logger.With(zap.String("storage", "file"))
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		logger.Error("failed to open file storage", zap.Error(err))
 		return nil, err
 	}
 
-	fs := &FileStorage{
+	fs := &Storage{
 		file:     file,
 		urls:     make(map[string]URLData),
 		lastUUID: 0,
 		logger:   logger,
 	}
-	if err := fs.loadFromFile(); err != nil {
-		fs.logger.Error("failed to load file storage", zap.Error(err))
-		return nil, err
+	if errLoad := fs.loadFromFile(); errLoad != nil {
+		fs.logger.Error("failed to load file storage", zap.Error(errLoad))
+		return nil, errLoad
 	}
 	return fs, nil
 }
 
-func (f *FileStorage) Add(ctx context.Context, userID, shortID, originalURL string) (string, error) {
+func (f *Storage) Add(_ context.Context, userID, shortID, originalURL string) (string, error) {
 	const method = "Add"
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -75,7 +75,7 @@ func (f *FileStorage) Add(ctx context.Context, userID, shortID, originalURL stri
 	return shortID, nil
 }
 
-func (f *FileStorage) GetByShortURL(ctx context.Context, shortURL string) (string, error) {
+func (f *Storage) GetByShortURL(_ context.Context, shortURL string) (string, error) {
 	const method = "GetByShortURL"
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -91,7 +91,7 @@ func (f *FileStorage) GetByShortURL(ctx context.Context, shortURL string) (strin
 	return url.OriginalURL, nil
 }
 
-func (f *FileStorage) GetByOriginalURL(ctx context.Context, originalURL string) (string, error) {
+func (f *Storage) GetByOriginalURL(_ context.Context, originalURL string) (string, error) {
 	const method = "GetByOriginalURL"
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -105,7 +105,7 @@ func (f *FileStorage) GetByOriginalURL(ctx context.Context, originalURL string) 
 	return "", entity.ErrURLNotFound
 }
 
-func (f *FileStorage) AddBatch(ctx context.Context, userID string, urls []entity.URL) error {
+func (f *Storage) AddBatch(_ context.Context, userID string, urls []entity.URL) error {
 	const method = "AddBatch"
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -129,7 +129,7 @@ func (f *FileStorage) AddBatch(ctx context.Context, userID string, urls []entity
 	return nil
 }
 
-func (f *FileStorage) loadFromFile() error {
+func (f *Storage) loadFromFile() error {
 	const method = "loadFromFile"
 	if _, err := f.file.Seek(0, 0); err != nil {
 		f.logger.Error(method, zap.Error(err))
@@ -156,7 +156,7 @@ func (f *FileStorage) loadFromFile() error {
 	return scanner.Err()
 }
 
-func (f *FileStorage) saveToFile() error {
+func (f *Storage) saveToFile() error {
 	const method = "saveToFile"
 	if err := f.file.Truncate(0); err != nil {
 		f.logger.Error(method, zap.Error(err))
@@ -193,16 +193,16 @@ func (f *FileStorage) saveToFile() error {
 	return writer.Flush()
 }
 
-func (f *FileStorage) Close() error {
+func (f *Storage) Close() error {
 	return f.file.Close()
 }
 
-func (f *FileStorage) Ping(ctx context.Context) error {
+func (f *Storage) Ping(_ context.Context) error {
 	// not needed for file storage
 	return nil
 }
 
-func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) ([]entity.URL, error) {
+func (f *Storage) GetUserURLs(_ context.Context, userID string) ([]entity.URL, error) {
 	const method = "GetUserURLs"
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -218,7 +218,7 @@ func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) ([]entity.
 }
 
 // MarkDeletedBatch marks URLs as deleted in batch.
-func (f *FileStorage) MarkDeletedBatch(ctx context.Context, userID string, shortURLs []string) error {
+func (f *Storage) MarkDeletedBatch(_ context.Context, userID string, shortURLs []string) error {
 	const method = "MarkDeletedBatch"
 	f.mu.Lock()
 	defer f.mu.Unlock()

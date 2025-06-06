@@ -26,29 +26,29 @@ type apiShortenOptions struct {
 	baseURL string
 }
 
-type apiShortenOption func(options *apiShortenOptions) error
+type APIShortenOption func(options *apiShortenOptions) error
 
-func WithAPIShortenUsecase(usecase URLSaver) apiShortenOption {
+func WithAPIShortenUsecase(usecase URLSaver) APIShortenOption {
 	return func(options *apiShortenOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
-func WithAPIShortenLogger(logger *zap.Logger) apiShortenOption {
+func WithAPIShortenLogger(logger *zap.Logger) APIShortenOption {
 	return func(options *apiShortenOptions) error {
 		options.logger = logger.With(zap.String("handler", "APIShortenHandler"))
 		return nil
 	}
 }
 
-func WithAPIShortenBaseURL(baseURL string) apiShortenOption {
+func WithAPIShortenBaseURL(baseURL string) APIShortenOption {
 	return func(options *apiShortenOptions) error {
 		options.baseURL = baseURL
 		return nil
 	}
 }
-func NewAPIShortenHandler(opts ...apiShortenOption) (*APIShortenHandler, error) {
+func NewAPIShortenHandler(opts ...APIShortenOption) (*APIShortenHandler, error) {
 	options := &apiShortenOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -94,7 +94,7 @@ func (h *APIShortenHandler) HandlerFunc() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		if err := json.Unmarshal(body, &request); err != nil {
+		if errUnmarshal := json.Unmarshal(body, &request); errUnmarshal != nil {
 			JSONResponse(w, http.StatusBadRequest, "Failed to unmarshal request body")
 			return
 		}

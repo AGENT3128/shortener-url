@@ -70,20 +70,24 @@ func (r *URLRepository) AddBatch(ctx context.Context, userID string, urls []enti
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if errRollback := tx.Rollback(ctx); errRollback != nil {
+			r.logger.Error("failed to rollback transaction", zap.Error(errRollback))
+		}
+	}()
 
 	qtx := r.queries.WithTx(tx)
 	now := time.Now()
 
 	for _, url := range urls {
-		_, err := qtx.AddURL(ctx, generated.AddURLParams{
+		_, errAdd := qtx.AddURL(ctx, generated.AddURLParams{
 			UserID:      userID,
 			ShortUrl:    url.ShortURL,
 			OriginalUrl: url.OriginalURL,
 			CreatedAt:   now,
 		})
-		if err != nil {
-			return err
+		if errAdd != nil {
+			return errAdd
 		}
 	}
 
