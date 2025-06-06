@@ -6,14 +6,16 @@ import (
 	"time"
 )
 
+// Constants for the Server.
 const (
-	defaultReadHeaderTimeout = 15 * time.Second
-	defaultReadTimeout       = 15 * time.Second
-	defaultWriteTimeout      = 10 * time.Second
-	defaultIdleTimeout       = 30 * time.Second
-	defaultAddress           = "localhost:8080"
+	defaultReadHeaderTimeout = 15 * time.Second // default read header timeout
+	defaultReadTimeout       = 15 * time.Second // default read timeout
+	defaultWriteTimeout      = 10 * time.Second // default write timeout
+	defaultIdleTimeout       = 30 * time.Second // default idle timeout
+	defaultAddress           = "localhost:8080" // default address
 )
 
+// options is the options for the Server.
 type options struct {
 	address           string
 	readHeaderTimeout time.Duration
@@ -23,12 +25,15 @@ type options struct {
 	handler           http.Handler
 }
 
+// Option is the option for the Server.
 type Option func(options *options) error
 
+// Server is the HTTP server.
 type Server struct {
 	httpServer *http.Server
 }
 
+// New creates a new Server.
 func New(opts ...Option) (*Server, error) {
 	server := &Server{
 		httpServer: &http.Server{
@@ -74,18 +79,22 @@ func New(opts ...Option) (*Server, error) {
 	return server, nil
 }
 
+// Address returns the address of the Server.
 func (s *Server) Address() string {
 	return s.httpServer.Addr
 }
 
+// Start starts the Server.
 func (s *Server) Start() error {
 	return s.httpServer.ListenAndServe()
 }
 
+// Shutdown shuts down the Server.
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
 }
 
+// WithHandler is the option for the Server to set the handler.
 func WithHandler(handler http.Handler) Option {
 	return func(options *options) error {
 		options.handler = handler
@@ -93,6 +102,7 @@ func WithHandler(handler http.Handler) Option {
 	}
 }
 
+// WithAddress is the option for the Server to set the address.
 func WithAddress(address string) Option {
 	return func(options *options) error {
 		options.address = address
@@ -100,6 +110,7 @@ func WithAddress(address string) Option {
 	}
 }
 
+// WithReadHeaderTimeout is the option for the Server to set the read header timeout.
 func WithReadHeaderTimeout(readHeaderTimeout time.Duration) Option {
 	return func(options *options) error {
 		options.readHeaderTimeout = readHeaderTimeout
@@ -107,6 +118,7 @@ func WithReadHeaderTimeout(readHeaderTimeout time.Duration) Option {
 	}
 }
 
+// WithReadTimeout is the option for the Server to set the read timeout.
 func WithReadTimeout(readTimeout time.Duration) Option {
 	return func(options *options) error {
 		options.readTimeout = readTimeout
@@ -114,6 +126,7 @@ func WithReadTimeout(readTimeout time.Duration) Option {
 	}
 }
 
+// WithWriteTimeout is the option for the Server to set the write timeout.
 func WithWriteTimeout(writeTimeout time.Duration) Option {
 	return func(options *options) error {
 		options.writeTimeout = writeTimeout
@@ -121,6 +134,7 @@ func WithWriteTimeout(writeTimeout time.Duration) Option {
 	}
 }
 
+// WithIdleTimeout is the option for the Server to set the idle timeout.
 func WithIdleTimeout(idleTimeout time.Duration) Option {
 	return func(options *options) error {
 		options.idleTimeout = idleTimeout

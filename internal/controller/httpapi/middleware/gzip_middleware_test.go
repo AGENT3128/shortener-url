@@ -26,7 +26,7 @@ type ShortenResponse struct {
 	Result string `json:"result"`
 }
 
-func TestGzipMiddleware(t *testing.T) {
+func TestGzipMiddleware(t *testing.T) { //nolint:gocognit // test code
 	// context for test
 	ctx := t.Context()
 
@@ -43,7 +43,7 @@ func TestGzipMiddleware(t *testing.T) {
 		}
 		defer r.Body.Close()
 
-		if err := json.Unmarshal(body, &req); err != nil {
+		if errUnmarshal := json.Unmarshal(body, &req); errUnmarshal != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		}
@@ -129,8 +129,8 @@ func TestGzipMiddleware(t *testing.T) {
 				if tt.acceptGzip {
 					assert.Equal(t, "gzip", resp.Header.Get("Content-Encoding"))
 
-					reader, err := gzip.NewReader(resp.Body)
-					require.NoError(t, err)
+					reader, errGzip := gzip.NewReader(resp.Body)
+					require.NoError(t, errGzip)
 
 					responseBody, err = io.ReadAll(reader)
 					require.NoError(t, err)

@@ -141,8 +141,12 @@ func TestShortenHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			test.setup()
-			req, err := http.NewRequest(test.request.method, test.request.path, strings.NewReader(test.request.body))
-			require.NoError(t, err)
+			req, errRequest := http.NewRequest(
+				test.request.method,
+				test.request.path,
+				strings.NewReader(test.request.body),
+			)
+			require.NoError(t, errRequest)
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, req)
 

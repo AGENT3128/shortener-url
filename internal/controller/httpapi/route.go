@@ -1,6 +1,9 @@
 package httpapi
 
 import (
+	//nolint:gosec // pprof is used for debugging
+	_ "net/http/pprof"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
@@ -14,8 +17,11 @@ type options struct {
 	baseURL    string
 	URLusecase URLusecase
 }
+
+// Option is the option for the router.
 type Option func(options *options) error
 
+// WithLogger is the option for the router to set the logger.
 func WithLogger(logger *zap.Logger) Option {
 	return func(options *options) error {
 		options.logger = logger
@@ -23,6 +29,7 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
+// WithBaseURL is the option for the router to set the base URL.
 func WithBaseURL(baseURL string) Option {
 	return func(options *options) error {
 		options.baseURL = baseURL
@@ -30,6 +37,7 @@ func WithBaseURL(baseURL string) Option {
 	}
 }
 
+// WithURLUsecase is the option for the router to set the URL usecase.
 func WithURLUsecase(usecase URLusecase) Option {
 	return func(options *options) error {
 		options.URLusecase = usecase
@@ -37,6 +45,7 @@ func WithURLUsecase(usecase URLusecase) Option {
 	}
 }
 
+// NewRouter creates a new router.
 func NewRouter(opts ...Option) (*chi.Mux, error) {
 	options := &options{}
 	for _, opt := range opts {
@@ -59,6 +68,23 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		return nil, err
 	}
 
+	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(customLogger.Handler())
+	router.Use(authMiddleware.Handler())
+	router.Use(customMiddleware.GzipMiddleware())
+	// pprof
+	router.Mount("/debug", middleware.Profiler())
+
+	err = initializeHandlers(router, options)
+	if err != nil {
+		return nil, err
+	}
+	return router, nil
+}
+
+func initializeHandlers(router *chi.Mux, options *options) error {
 	// handlers
 	shortenHandler, err := handlers.NewShortenHandler(
 		handlers.WithShortenBaseURL(options.baseURL),
@@ -66,7 +92,7 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		handlers.WithShortenLogger(options.logger),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	redirectHandler, err := handlers.NewRedirectHandler(
@@ -74,7 +100,7 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		handlers.WithRedirectLogger(options.logger),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	apiShortenHandler, err := handlers.NewAPIShortenHandler(
@@ -83,7 +109,7 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		handlers.WithAPIShortenBaseURL(options.baseURL),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	pingHandler, err := handlers.NewPingHandler(
@@ -91,7 +117,7 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		handlers.WithPingLogger(options.logger),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	batchShortenHandler, err := handlers.NewBatchShortenHandler(
@@ -100,7 +126,7 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		handlers.WithBatchShortenBaseURL(options.baseURL),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	userURLsHandler, err := handlers.NewUserURLsHandler(
@@ -109,7 +135,7 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		handlers.WithUserURLsLogger(options.logger),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	userURLsDeleteHandler, err := handlers.NewUserURLsDeleteHandler(
@@ -117,15 +143,8 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 		handlers.WithUserURLsDeleteLogger(options.logger),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	router := chi.NewRouter()
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(customLogger.Handler())
-	router.Use(authMiddleware.Handler())
-	router.Use(customMiddleware.GzipMiddleware())
-
 	h := []handler{
 		shortenHandler,
 		redirectHandler,
@@ -139,5 +158,5 @@ func NewRouter(opts ...Option) (*chi.Mux, error) {
 	for _, h := range h {
 		router.Method(h.Method(), h.Pattern(), h.HandlerFunc())
 	}
-	return router, nil
+	return nil
 }

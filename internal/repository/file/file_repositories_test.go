@@ -14,7 +14,7 @@ import (
 )
 
 type testStorage struct {
-	storage *FileStorage
+	storage *Storage
 	file    *os.File
 	ctx     context.Context
 }
@@ -25,7 +25,7 @@ func setupTestStorage(t *testing.T) *testStorage {
 	testLogger, err := zap.NewDevelopment()
 	require.NoError(t, err, "failed to create test logger")
 
-	tempFile, err := os.CreateTemp(os.TempDir(), "test_storage.json")
+	tempFile, err := os.CreateTemp(t.TempDir(), "test_storage.json")
 	require.NoError(t, err, "failed to create temp file")
 
 	storage, err := NewFileStorage(tempFile.Name(), testLogger)
@@ -78,17 +78,17 @@ func TestBasicOperations(t *testing.T) {
 
 			shortURL, err := ts.storage.Add(ctx, tt.userID, tt.shortID, tt.originalURL)
 			if tt.wantError {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.shortID, shortURL)
 
-				gotURL, err := ts.storage.GetByShortURL(ctx, tt.shortID)
-				assert.NoError(t, err)
+				gotURL, errGet := ts.storage.GetByShortURL(ctx, tt.shortID)
+				require.NoError(t, errGet)
 				assert.Equal(t, tt.originalURL, gotURL)
 
-				gotShortURL, err := ts.storage.GetByOriginalURL(ctx, tt.originalURL)
-				assert.NoError(t, err)
+				gotShortURL, errGet := ts.storage.GetByOriginalURL(ctx, tt.originalURL)
+				require.NoError(t, errGet)
 				assert.Equal(t, tt.shortID, gotShortURL)
 			}
 		})
@@ -112,8 +112,8 @@ func TestBatchOperations(t *testing.T) {
 
 	for _, url := range urls {
 		t.Run("check batch URL "+url.ShortURL, func(t *testing.T) {
-			originalURL, err := ts.storage.GetByShortURL(ctx, url.ShortURL)
-			require.NoError(t, err)
+			originalURL, errGet := ts.storage.GetByShortURL(ctx, url.ShortURL)
+			require.NoError(t, errGet)
 			assert.Equal(t, url.OriginalURL, originalURL)
 		})
 	}
