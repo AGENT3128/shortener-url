@@ -15,14 +15,23 @@ tasks:
 
   dependencies:
     desc: Install dependencies
+    deps: [generate]
     cmds:
       - go mod tidy
       - go mod download
       - go mod verify
 
+  generate:
+    desc: Generate code
+    cmds:
+      - |
+        export PATH=$PATH:$(go env GOPATH)/bin  
+        rm -rf internal/repository/postgres/generated/
+        go generate ./...
+
   build:
     desc: Build the shortener binary
-    deps: [clean]
+    deps: [clean, generate]
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - |
@@ -38,12 +47,15 @@ tasks:
     cmds:
       - |
         export PATH=$PATH:$(go env GOPATH)/bin
-        golangci-lint run ./...
+        golangci-lint run ./... --fix
 
   test:
     desc: Run tests
+    deps: [generate]
     cmds:
-      - go test -v ./...
+      - go test ./... -coverprofile=coverage.out 
+      - go tool cover -func=coverage.out
+      - go tool cover -html=coverage.out -o coverage.html
 
   test_increment_1:
     desc: Test increment 1
@@ -135,6 +147,18 @@ tasks:
     cmds:
       - shortenertestbeta -test.v -test.run=^TestIteration13$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
 
+  test_increment_14:
+    desc: Test increment 14
+    deps: [build]
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration14$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+
+  test_increment_15:
+    desc: Test increment 15
+    deps: [build]
+    cmds:
+      - shortenertestbeta -test.v -test.run=^TestIteration15$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+
   test_increment_all:
     desc: Run all tests
     cmds:
@@ -151,17 +175,11 @@ tasks:
       - task: test_increment_11
       - task: test_increment_12
       - task: test_increment_13
+      - task: test_increment_14
+      - task: test_increment_15
       - echo "All tests passed"
 
   run:
     desc: Run the shortener binary
     cmds:
       - go run {{.MAIN_FILE}} -d 'postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
-
-  generate-mocks:
-    desc: Generate mocks for testing
-    cmds:
-      - mkdir -p internal/app/storage/mocks
-      - |
-        export PATH=$PATH:$(go env GOPATH)/bin
-        mockgen -source=internal/app/server/server.go -destination=internal/app/storage/mocks/mock_repository.go -package=mocks Repository
