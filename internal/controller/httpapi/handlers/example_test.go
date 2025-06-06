@@ -15,7 +15,7 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/dto"
 )
 
-// This example demonstrates how to shorten a URL using the plain text endpoint
+// This example demonstrates how to shorten a URL using the plain text endpoint.
 func Example_shortenURL() {
 	// Create a new router and register the handler
 	r := chi.NewRouter()
@@ -58,9 +58,13 @@ func Example_shortenURL() {
 		return
 	}
 	fmt.Printf("Status: %d\nShortened URL: %s\n", resp.StatusCode, string(body))
+
+	// Output:
+	// Status: 201
+	// Shortened URL: http://localhost:8080/abc123
 }
 
-// This example demonstrates how to shorten a URL using the JSON API endpoint
+// This example demonstrates how to shorten a URL using the JSON API endpoint.
 func Example_shortenURLJSON() {
 	r := chi.NewRouter()
 
@@ -106,9 +110,13 @@ func Example_shortenURLJSON() {
 	var result dto.ShortenResponse
 	json.NewDecoder(resp.Body).Decode(&result)
 	fmt.Printf("Status: %d\nResult: %+v\n", resp.StatusCode, result)
+
+	// Output:
+	// Status: 201
+	// Result: {Result:http://localhost:8080/abc123}
 }
 
-// This example demonstrates how to batch shorten multiple URLs
+// This example demonstrates how to batch shorten multiple URLs.
 func Example_batchShorten() {
 	r := chi.NewRouter()
 
@@ -161,9 +169,13 @@ func Example_batchShorten() {
 	var result []dto.ShortenBatchResponse
 	json.NewDecoder(resp.Body).Decode(&result)
 	fmt.Printf("Status: %d\nBatch Result: %+v\n", resp.StatusCode, result)
+
+	// Output:
+	// Status: 201
+	// Batch Result: [{CorrelationID:1 ShortURL:http://localhost:8080/abc123} {CorrelationID:2 ShortURL:http://localhost:8080/def456}]
 }
 
-// This example demonstrates how to get user's URLs
+// This example demonstrates how to get user's URLs.
 func Example_getUserURLs() {
 	r := chi.NewRouter()
 
@@ -199,9 +211,13 @@ func Example_getUserURLs() {
 	var urls []dto.UserURLsResponse
 	json.NewDecoder(resp.Body).Decode(&urls)
 	fmt.Printf("Status: %d\nUser URLs: %+v\n", resp.StatusCode, urls)
+
+	// Output:
+	// Status: 200
+	// User URLs: [{ShortURL:http://localhost:8080/abc123 OriginalURL:https://practicum.yandex.ru} {ShortURL:http://localhost:8080/def456 OriginalURL:https://ya.ru}]
 }
 
-// This example demonstrates how to delete user's URLs
+// This example demonstrates how to delete user's URLs.
 func Example_deleteUserURLs() {
 	r := chi.NewRouter()
 
@@ -242,9 +258,12 @@ func Example_deleteUserURLs() {
 	defer resp.Body.Close()
 
 	fmt.Printf("Status: %d\n", resp.StatusCode)
+
+	// Output:
+	// Status: 202
 }
 
-// This example demonstrates how to check service health
+// This example demonstrates how to check service health.
 func Example_pingDB() {
 	r := chi.NewRouter()
 
@@ -264,13 +283,28 @@ func Example_pingDB() {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
+	// Create request with authorization header
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/ping", nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
+	req.Header.Set("Authorization", "Bearer user-token")
+
 	// Send request
-	resp, err := http.Get(ts.URL + "/ping")
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	fmt.Printf("Status: %d\n", resp.StatusCode)
+	// Parse and print response
+	var response map[string]string
+	json.NewDecoder(resp.Body).Decode(&response)
+	fmt.Printf("Status: %d\nResponse: %s\n", resp.StatusCode, response["message"])
+
+	// Output:
+	// Status: 200
+	// Response: Database is alive
 }

@@ -10,7 +10,7 @@ const (
 	// CHARSET is the charset for the short ID.
 	CHARSET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	// LENGTH is the length of the short ID.
-	LENGTH  = 8
+	LENGTH = 8
 )
 
 // GenerateShortID generates a short ID.
