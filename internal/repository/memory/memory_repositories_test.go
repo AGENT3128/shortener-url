@@ -1,4 +1,4 @@
-package memory
+package memory_test
 
 import (
 	"testing"
@@ -8,12 +8,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/AGENT3128/shortener-url/internal/entity"
+	"github.com/AGENT3128/shortener-url/internal/repository/memory"
 )
 
 func TestMemStorage_Add(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	tests := []struct {
 		name        string
@@ -54,7 +55,7 @@ func TestMemStorage_Add(t *testing.T) {
 func TestMemStorage_GetByShortURL(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	// Prepare test data
 	shortURL := "test-short"
@@ -95,7 +96,7 @@ func TestMemStorage_GetByShortURL(t *testing.T) {
 func TestMemStorage_GetByOriginalURL(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	// Prepare test data
 	shortURL := "test-short"
@@ -136,7 +137,7 @@ func TestMemStorage_GetByOriginalURL(t *testing.T) {
 func TestMemStorage_AddBatch(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	urls := []entity.URL{
 		{
@@ -164,7 +165,7 @@ func TestMemStorage_AddBatch(t *testing.T) {
 func TestMemStorage_GetUserURLs(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	userID1 := "user1"
 	userID2 := "user2"
@@ -225,7 +226,7 @@ func TestMemStorage_GetUserURLs(t *testing.T) {
 func TestMemStorage_MarkDeletedBatch(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	userID := "user1"
 	urls := []entity.URL{
@@ -253,7 +254,7 @@ func TestMemStorage_MarkDeletedBatch(t *testing.T) {
 func TestMemStorage_Ping(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	err = repo.Ping(t.Context())
 	require.NoError(t, err)

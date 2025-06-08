@@ -1,4 +1,4 @@
-package usecase
+package usecase_test
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/AGENT3128/shortener-url/internal/entity"
+	"github.com/AGENT3128/shortener-url/internal/usecase"
 	"github.com/AGENT3128/shortener-url/internal/usecase/mocks"
 	"github.com/AGENT3128/shortener-url/internal/worker"
 )
@@ -26,9 +27,9 @@ func TestURLUsecase_Add(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -156,9 +157,9 @@ func TestURLUsecase_GetByOriginalURL(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -234,9 +235,9 @@ func TestURLUsecase_GetByShortURL(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -296,9 +297,9 @@ func TestURLUsecase_AddBatch(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -377,9 +378,9 @@ func TestURLUsecase_GetUserURLs(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -446,10 +447,10 @@ func TestURLUsecase_DeleteUserURLs(t *testing.T) {
 	require.NoError(t, err)
 	deleteWorker := worker.NewDeleteWorker(urlRepositoryMock, logger)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
-		WithDeleteWorker(deleteWorker),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
+		usecase.WithDeleteWorker(deleteWorker),
 	)
 	require.NoError(t, err)
 
@@ -502,9 +503,9 @@ func TestURLUsecase_Ping(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 

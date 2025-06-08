@@ -1,4 +1,4 @@
-package middleware
+package middleware_test
 
 import (
 	"bytes"
@@ -16,6 +16,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/middleware"
 )
 
 type ShortenRequest struct {
@@ -31,7 +33,7 @@ func TestGzipMiddleware(t *testing.T) { //nolint:gocognit // test code
 	ctx := t.Context()
 
 	router := chi.NewRouter()
-	router.Use(GzipMiddleware())
+	router.Use(middleware.GzipMiddleware())
 
 	// test handler without business logic
 	router.Post("/test", func(w http.ResponseWriter, r *http.Request) {

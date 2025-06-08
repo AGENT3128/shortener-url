@@ -1,4 +1,4 @@
-package file
+package file_test
 
 import (
 	"context"
@@ -11,10 +11,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/AGENT3128/shortener-url/internal/entity"
+	"github.com/AGENT3128/shortener-url/internal/repository/file"
 )
 
 type testStorage struct {
-	storage *Storage
+	storage *file.Storage
 	file    *os.File
 	ctx     context.Context
 }
@@ -28,7 +29,7 @@ func setupTestStorage(t *testing.T) *testStorage {
 	tempFile, err := os.CreateTemp(t.TempDir(), "test_storage.json")
 	require.NoError(t, err, "failed to create temp file")
 
-	storage, err := NewFileStorage(tempFile.Name(), testLogger)
+	storage, err := file.NewFileStorage(tempFile.Name(), testLogger)
 	require.NoError(t, err, "failed to create file storage")
 
 	return &testStorage{

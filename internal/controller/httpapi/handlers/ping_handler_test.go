@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"encoding/json"
@@ -12,6 +12,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers"
 	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers/mocks"
 	customMiddleware "github.com/AGENT3128/shortener-url/internal/controller/httpapi/middleware"
 )
@@ -24,9 +25,9 @@ func TestPingHandler(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	handler, err := NewPingHandler(
-		WithPingUsecase(usecase),
-		WithPingLogger(logger),
+	handler, err := handlers.NewPingHandler(
+		handlers.WithPingUsecase(usecase),
+		handlers.WithPingLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -66,7 +67,7 @@ func TestPingHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-				response:    Response{Status: http.StatusOK, Message: "OK", Data: "Database is alive"},
+				response:    handlers.Response{Status: http.StatusOK, Message: "OK", Data: "Database is alive"},
 			},
 			setup: func() {
 				usecase.EXPECT().Ping(gomock.Any()).Return(nil)
@@ -100,8 +101,8 @@ func TestPingHandler(t *testing.T) {
 
 			if test.want.response != nil {
 				switch test.want.response.(type) {
-				case Response:
-					var response Response
+				case handlers.Response:
+					var response handlers.Response
 					err = json.NewDecoder(recorder.Body).Decode(&response)
 					require.NoError(t, err)
 					require.Equal(t, test.want.response, response)

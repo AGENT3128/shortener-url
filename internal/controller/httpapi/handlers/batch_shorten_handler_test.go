@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"encoding/json"
@@ -13,6 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers"
 	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers/mocks"
 	customMiddleware "github.com/AGENT3128/shortener-url/internal/controller/httpapi/middleware"
 	"github.com/AGENT3128/shortener-url/internal/dto"
@@ -27,10 +28,10 @@ func TestBatchShortenHandler(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	handler, err := NewBatchShortenHandler(
-		WithBatchShortenUsecase(batchURLSaverMock),
-		WithBatchShortenLogger(logger),
-		WithBatchShortenBaseURL("http://localhost:8080"),
+	handler, err := handlers.NewBatchShortenHandler(
+		handlers.WithBatchShortenUsecase(batchURLSaverMock),
+		handlers.WithBatchShortenLogger(logger),
+		handlers.WithBatchShortenBaseURL("http://localhost:8080"),
 	)
 	require.NoError(t, err)
 	require.Equal(t, "/api/shorten/batch", handler.Pattern())
@@ -98,7 +99,7 @@ func TestBatchShortenHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusBadRequest,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusBadRequest,
 					Message: "Failed to unmarshal request body",
 					Data:    nil,
@@ -116,7 +117,11 @@ func TestBatchShortenHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusBadRequest,
 				contentType: "application/json",
-				response:    Response{Status: http.StatusBadRequest, Message: "Request body is empty", Data: nil},
+				response: handlers.Response{
+					Status:  http.StatusBadRequest,
+					Message: "Request body is empty",
+					Data:    nil,
+				},
 			},
 			setup: func() {},
 		},
@@ -133,7 +138,7 @@ func TestBatchShortenHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusInternalServerError,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusInternalServerError,
 					Message: "Failed to shorten URL",
 					Data:    nil,

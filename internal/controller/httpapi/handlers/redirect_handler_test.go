@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"net/http"
@@ -10,6 +10,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers"
 	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers/mocks"
 	customMiddleware "github.com/AGENT3128/shortener-url/internal/controller/httpapi/middleware"
 	"github.com/AGENT3128/shortener-url/internal/entity"
@@ -23,9 +24,9 @@ func TestRedirectHandler(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	handler, err := NewRedirectHandler(
-		WithRedirectUsecase(usecase),
-		WithRedirectLogger(logger),
+	handler, err := handlers.NewRedirectHandler(
+		handlers.WithRedirectUsecase(usecase),
+		handlers.WithRedirectLogger(logger),
 	)
 	require.NoError(t, err)
 

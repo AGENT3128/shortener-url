@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"encoding/json"
@@ -13,6 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers"
 	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers/mocks"
 	customMiddleware "github.com/AGENT3128/shortener-url/internal/controller/httpapi/middleware"
 	"github.com/AGENT3128/shortener-url/internal/entity"
@@ -26,10 +27,10 @@ func TestShortenHandler(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	handler, err := NewShortenHandler(
-		WithShortenUsecase(usecase),
-		WithShortenLogger(logger),
-		WithShortenBaseURL("http://localhost:8080"),
+	handler, err := handlers.NewShortenHandler(
+		handlers.WithShortenUsecase(usecase),
+		handlers.WithShortenLogger(logger),
+		handlers.WithShortenBaseURL("http://localhost:8080"),
 	)
 	require.NoError(t, err)
 
@@ -105,7 +106,7 @@ func TestShortenHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusInternalServerError,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusInternalServerError,
 					Message: "Internal Server Error",
 					Data:    "failed to add URL",
@@ -127,7 +128,7 @@ func TestShortenHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusBadRequest,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusBadRequest,
 					Message: "Bad Request",
 					Data:    "original URL is empty",
@@ -153,8 +154,8 @@ func TestShortenHandler(t *testing.T) {
 			require.Equal(t, test.want.statusCode, recorder.Code)
 			require.Equal(t, test.want.contentType, recorder.Header().Get("Content-Type"))
 			switch test.want.response.(type) {
-			case Response:
-				var response Response
+			case handlers.Response:
+				var response handlers.Response
 				err = json.NewDecoder(recorder.Body).Decode(&response)
 				require.NoError(t, err)
 				require.Equal(t, test.want.response, response)

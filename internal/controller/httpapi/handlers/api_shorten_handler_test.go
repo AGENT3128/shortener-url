@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"encoding/json"
@@ -13,6 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers"
 	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers/mocks"
 	customMiddleware "github.com/AGENT3128/shortener-url/internal/controller/httpapi/middleware"
 	"github.com/AGENT3128/shortener-url/internal/dto"
@@ -27,10 +28,10 @@ func TestAPIShortenHandler(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	handler, err := NewAPIShortenHandler(
-		WithAPIShortenUsecase(urlUsecaseMock),
-		WithAPIShortenLogger(logger),
-		WithAPIShortenBaseURL("http://localhost:8080"),
+	handler, err := handlers.NewAPIShortenHandler(
+		handlers.WithAPIShortenUsecase(urlUsecaseMock),
+		handlers.WithAPIShortenLogger(logger),
+		handlers.WithAPIShortenBaseURL("http://localhost:8080"),
 	)
 	require.NoError(t, err)
 	require.Equal(t, "/api/shorten", handler.Pattern())
@@ -89,7 +90,7 @@ func TestAPIShortenHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusBadRequest,
 				contentType: "application/json",
-				response:    Response{Status: http.StatusBadRequest, Message: "URL is required", Data: nil},
+				response:    handlers.Response{Status: http.StatusBadRequest, Message: "URL is required", Data: nil},
 			},
 			setup: func() {},
 		},
@@ -103,7 +104,7 @@ func TestAPIShortenHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusBadRequest,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusBadRequest,
 					Message: "Failed to unmarshal request body",
 					Data:    nil,
@@ -121,7 +122,7 @@ func TestAPIShortenHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusConflict,
 				contentType: "application/json",
-				response:    Response{Status: http.StatusConflict, Message: "URL already exists", Data: nil},
+				response:    handlers.Response{Status: http.StatusConflict, Message: "URL already exists", Data: nil},
 			},
 			setup: func() {
 				urlUsecaseMock.EXPECT().
@@ -139,7 +140,7 @@ func TestAPIShortenHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusInternalServerError,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusInternalServerError,
 					Message: "Failed to shorten URL",
 					Data:    nil,
@@ -176,7 +177,7 @@ func TestAPIShortenHandler(t *testing.T) {
 			switch response := response.(type) {
 			case dto.ShortenResponse:
 				require.Equal(t, test.want.response, response)
-			case Response:
+			case handlers.Response:
 				require.Equal(t, test.want.response, response)
 			default:
 			}
