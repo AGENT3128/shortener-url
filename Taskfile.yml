@@ -6,6 +6,9 @@ vars:
   MAIN_FILE: cmd/shortener/main.go
   GO_FILES:
     sh: find . -type f -name '*.go'
+  DATABASE_DSN: 'postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+  SERVER_PORT: 8081
+  BASE_URL: "http://localhost:{{.SERVER_PORT}}"
 
 tasks:
   clean:
@@ -57,150 +60,172 @@ tasks:
       - go tool cover -func=coverage.out
       - go tool cover -html=coverage.out -o coverage.html
 
-  test_increment_1:
-    desc: Test increment 1
+  # base task for tests, from which the rest will inherit
+  _test_increment:
+    internal: true
     deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration1$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}}
+      - |
+        shortenertestbeta -test.v -test.run=^TestIteration{{.ITERATION}}$ {{.TEST_ARGS}}
+
+  test_increment_1:
+    desc: Test increment 1
+    cmds:
+      - task: _test_increment
+        vars:
+          ITERATION: 1
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}}"
 
   test_increment_2:
     desc: Test increment 2
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration2$ -source-path=.
-  
+      - task: _test_increment
+        vars:
+          ITERATION: 2
+          TEST_ARGS: "-source-path=."
+
   test_increment_3:
     desc: Test increment 3
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration3$ -source-path=.
+      - task: _test_increment
+        vars:
+          ITERATION: 3
+          TEST_ARGS: "-source-path=."
 
   test_increment_4:
     desc: Test increment 4
-    deps: [build]
-    env:
-      SERVER_PORT: 8081
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration4$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -server-port=$SERVER_PORT -source-path=.
-  
+      - task: _test_increment
+        vars:
+          ITERATION: 4
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -server-port={{ .SERVER_PORT }} -source-path=."
+
   test_increment_5:
     desc: Test increment 5
-    deps: [build]
-    env:
-      SERVER_PORT: 9090
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration5$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -server-port=$SERVER_PORT
-  
+      - task: _test_increment
+        vars:
+          ITERATION: 5
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -server-port={{ .SERVER_PORT }}"
+
   test_increment_6:
     desc: Test increment 6
-    deps: [build]
-    env:
-      SERVER_ADDRESS: "localhost:8081"
-      BASE_URL: "http://localhost:8081"
-      RELEASE_MODE: "release"
-      LOG_LEVEL: "info"
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration6$ -source-path=.
+      - task: _test_increment
+        vars:
+          ITERATION: 6
+          TEST_ARGS: "-source-path=."
 
   test_increment_7:
     desc: Test increment 7
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration7$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=.
+      - task: _test_increment
+        vars:
+          ITERATION: 7
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=."
 
   test_increment_8:
     desc: Test increment 8
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration8$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}}
+      - task: _test_increment
+        vars:
+          ITERATION: 8
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}}"
 
   test_increment_9:
     desc: Test increment 9
-    deps: [build]
-    env:
+    vars:
       TEMP_FILE: test.json
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration9$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=. -file-storage-path=$TEMP_FILE
-      - rm -f $TEMP_FILE
+      - task: _test_increment
+        vars:
+          ITERATION: 9
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=. -file-storage-path={{.TEMP_FILE}}"
+      - rm -f {{.TEMP_FILE}}
 
   test_increment_10:
     desc: Test increment 10
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration10$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=. -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+      - task: _test_increment
+        vars:
+          ITERATION: 10
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -source-path=. -database-dsn={{.DATABASE_DSN}}"
 
   test_increment_11:
     desc: Test increment 11
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration11$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+      - task: _test_increment
+        vars:
+          ITERATION: 11
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn={{.DATABASE_DSN}}"
 
   test_increment_12:
     desc: Test increment 12
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration12$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+      - task: _test_increment
+        vars:
+          ITERATION: 12
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn={{.DATABASE_DSN}}"
 
   test_increment_13:
     desc: Test increment 13
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration13$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+      - task: _test_increment
+        vars:
+          ITERATION: 13
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn={{.DATABASE_DSN}}"
 
   test_increment_14:
     desc: Test increment 14
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration14$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+      - task: _test_increment
+        vars:
+          ITERATION: 14
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn={{.DATABASE_DSN}}"
 
   test_increment_15:
     desc: Test increment 15
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration15$ -binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+      - task: _test_increment
+        vars:
+          ITERATION: 15
+          TEST_ARGS: "-binary-path={{.BUILD_DIR}}/{{.BINARY_NAME}} -database-dsn={{.DATABASE_DSN}}"
 
   test_increment_16:
     desc: Test increment 16
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration16$  -source-path=. 
+      - task: _test_increment
+        vars:
+          ITERATION: 16
+          TEST_ARGS: "-source-path=."
 
   test_increment_17:
     desc: Test increment 17
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration17$ -source-path=. 
+      - task: _test_increment
+        vars:
+          ITERATION: 17
+          TEST_ARGS: "-source-path=."
 
   test_increment_18:
     desc: Test increment 18
-    deps: [build]
     cmds:
-      - shortenertestbeta -test.v -test.run=^TestIteration18$ -source-path=.
+      - task: _test_increment
+        vars:
+          ITERATION: 18
+          TEST_ARGS: "-source-path=."
 
   test_increment_all:
     desc: Run all tests
+    vars:
+      ITERATIONS:
+        sh: seq 1 18
     cmds:
-      - task: test_increment_1
-      - task: test_increment_2
-      - task: test_increment_3
-      - task: test_increment_4
-      - task: test_increment_5
-      - task: test_increment_6
-      - task: test_increment_7
-      - task: test_increment_8
-      - task: test_increment_9
-      - task: test_increment_10
-      - task: test_increment_11
-      - task: test_increment_12
-      - task: test_increment_13
-      - task: test_increment_14
-      - task: test_increment_15
-      - task: test_increment_16
-      - task: test_increment_17
-      - task: test_increment_18
+      - for: { var: ITERATIONS }
+        task: test_increment_{{.ITEM}}
       - echo "All tests passed"
 
   run:
     desc: Run the shortener binary
     cmds:
-      - go run {{.MAIN_FILE}} -d 'postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+      - go run {{.MAIN_FILE}} -d {{.DATABASE_DSN}}
