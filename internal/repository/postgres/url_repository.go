@@ -129,3 +129,9 @@ func (r *URLRepository) MarkDeletedBatch(ctx context.Context, userID string, sho
 	}
 	return nil
 }
+
+// Close closes the repository.
+func (r *URLRepository) Close() error {
+	r.db.Pool.Close()
+	return nil
+}

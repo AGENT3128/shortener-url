@@ -16,6 +16,7 @@ type URLRepository interface {
 	BatchURLSaver
 	UserURLGetter
 	URLDeleter
+	Closer
 }
 
 // URLSaver is the interface for the URLSaver.
@@ -47,4 +48,9 @@ type UserURLGetter interface {
 // URLDeleter is the interface for the URLDeleter.
 type URLDeleter interface {
 	MarkDeletedBatch(ctx context.Context, userID string, shortURLs []string) error
+}
+
+// Closer is the interface for the Closer.
+type Closer interface {
+	Close() error
 }

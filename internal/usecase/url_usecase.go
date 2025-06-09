@@ -80,6 +80,11 @@ func (uc *URLUsecase) Shutdown() {
 	if uc.worker != nil {
 		uc.worker.Shutdown()
 	}
+	if closer, ok := uc.repository.(Closer); ok {
+		if err := closer.Close(); err != nil {
+			uc.logger.Error("failed to close repository", zap.Error(err))
+		}
+	}
 }
 
 // Add adds a URL.

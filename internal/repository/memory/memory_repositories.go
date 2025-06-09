@@ -139,3 +139,8 @@ func (m *MemStorage) MarkDeletedBatch(_ context.Context, userID string, shortURL
 
 	return nil
 }
+
+// Close closes the repository.
+func (m *MemStorage) Close() error {
+	return nil
+}

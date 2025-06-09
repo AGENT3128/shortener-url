@@ -56,6 +56,11 @@ type URLDeleter interface {
 	MarkDeletedBatch(ctx context.Context, userID string, shortURLs []string) error
 }
 
+// Closer is an interface that defines the method for closing the repository.
+type Closer interface {
+	Close() error
+}
+
 // Repository is an interface that defines the methods for the repository.
 type Repository interface {
 	URLSaver
@@ -64,6 +69,7 @@ type Repository interface {
 	BatchURLSaver
 	UserURLGetter
 	URLDeleter
+	Closer
 }
 
 // Run is the main function for running the application.

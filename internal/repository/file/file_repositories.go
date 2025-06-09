@@ -59,8 +59,10 @@ type Storage struct {
 	stopSaving chan struct{}
 }
 
+// Option is the option for the FileStorage.
 type Option func(*Caretaker)
 
+// WithSaveTicker is the option for the FileStorage.
 func WithSaveTicker(ticker time.Duration) Option {
 	return func(c *Caretaker) {
 		c.saveTimeout = ticker

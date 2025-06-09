@@ -469,6 +469,9 @@ func TestURLUsecase_DeleteUserURLs(t *testing.T) {
 				urlRepositoryMock.EXPECT().
 					MarkDeletedBatch(gomock.Any(), "user1", []string{"abc123", "def456"}).
 					Return(nil)
+				urlRepositoryMock.EXPECT().
+					Close().
+					Return(nil)
 			},
 			wantErr: false,
 		},
