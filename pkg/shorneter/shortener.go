@@ -14,19 +14,19 @@ const (
 )
 
 // GenerateShortID generates a short ID.
-func GenerateShortID() string {
+func GenerateShortID() (string, error) {
 	result := make([]byte, LENGTH)
 	charsetLength := big.NewInt(int64(len(CHARSET)))
 
 	for i := range result {
 		n, err := rand.Int(rand.Reader, charsetLength)
 		if err != nil {
-			continue
+			return "", err
 		}
 		result[i] = CHARSET[n.Int64()]
 	}
 
-	return string(result)
+	return string(result), nil
 }
 
 // GenerateShortIDOptimized generates a short ID optimized for performance.

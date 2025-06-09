@@ -11,7 +11,8 @@ import (
 
 func TestGenerateShortID(t *testing.T) {
 	t.Run("length check", func(t *testing.T) {
-		shortID := shorneter.GenerateShortID()
+		shortID, err := shorneter.GenerateShortID()
+		require.NoError(t, err)
 		assert.Len(t, shortID, shorneter.LENGTH, "Expected length of %d, got %d", shorneter.LENGTH, len(shortID))
 	})
 
@@ -20,7 +21,8 @@ func TestGenerateShortID(t *testing.T) {
 		ids := make(map[string]bool)
 
 		for range iterations {
-			id := shorneter.GenerateShortID()
+			id, err := shorneter.GenerateShortID()
+			require.NoError(t, err)
 			assert.False(t, ids[id], "Duplicate ID found: %s", id)
 			ids[id] = true
 		}
@@ -39,7 +41,8 @@ func TestGenerateShortIDOptimized(t *testing.T) {
 		ids := make(map[string]bool)
 
 		for range iterations {
-			id := shorneter.GenerateShortID()
+			id, err := shorneter.GenerateShortID()
+			require.NoError(t, err)
 			assert.False(t, ids[id], "Duplicate ID found: %s", id)
 			ids[id] = true
 		}

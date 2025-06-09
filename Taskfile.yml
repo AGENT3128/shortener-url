@@ -228,4 +228,37 @@ tasks:
   run:
     desc: Run the shortener binary
     cmds:
-      - go run {{.MAIN_FILE}} -d {{.DATABASE_DSN}}
+      - go run {{.MAIN_FILE}} -d {{.DATABASE_DSN}} -http-server-write-timeout=20s
+
+  stress_test:
+    desc: Run a stress test
+    cmds:
+      - k6 run k6_stress/upload_url.js
+
+  profile_mem:
+    desc: |
+      Profile the shortener memory
+      Example:
+        1) start shortener with -http-server-write-timeout=20s
+          `# task run`
+        2) saving the profiling to the file base.pprof , we used old implementation of short reference generation - GenerateShortID 
+          `# PROFILE_NAME=base task profile_mem`
+        3) run a stress test 
+          `# task stress_test`
+        4) SIGTERM shortener
+        5) optimize GenerateShortID -> GenerateShortIDOptimized
+        6) start shortener with -http-server-write-timeout=20s
+          `# task run`
+        7) saving the profiling to the file result.pprof , we used new implementation of short reference generation - GenerateShortIDOptimized
+          `# PROFILE_NAME=result task profile_mem`
+        8) SIGTERM shortener
+        9) compare the two files
+          `# go tool pprof -top -diff_base=profiles/base.pprof profiles/result.pprof `
+
+    vars:
+      SERVER_PORT: 8080
+      PROFILE_NAME:
+        sh: echo ${PROFILE_NAME:-profile_mem}
+    cmds:
+      - |
+        sh -c "go tool pprof -proto -output=profiles/{{.PROFILE_NAME}}.pprof http://localhost:{{.SERVER_PORT}}/debug/pprof/heap?seconds=15"
