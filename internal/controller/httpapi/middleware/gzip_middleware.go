@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	gzipWriterPool = sync.Pool{
+	gzipWriterPool = sync.Pool{ //nolint:gochecknoglobals // gzip writer pool is used for gzip compression
 		New: func() any {
 			return gzip.NewWriter(nil)
 		},
 	}
-	gzipReaderPool = sync.Pool{
+	gzipReaderPool = sync.Pool{ //nolint:gochecknoglobals // gzip reader pool is used for gzip compression
 		New: func() any {
 			return new(gzip.Reader)
 		},
@@ -25,16 +25,22 @@ type gzipWriter struct {
 	writer *gzip.Writer
 }
 
+// Write writes the response to the client.
 func (g *gzipWriter) Write(data []byte) (int, error) {
 	return g.writer.Write(data)
 }
 
+// GzipMiddleware is the middleware for the gzip.
 func GzipMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// request body is gzip
 			if r.Header.Get("Content-Encoding") == "gzip" {
-				reader := gzipReaderPool.Get().(*gzip.Reader)
+				reader, ok := gzipReaderPool.Get().(*gzip.Reader)
+				if !ok {
+					http.Error(w, "Failed to get gzip reader", http.StatusInternalServerError)
+					return
+				}
 				if err := reader.Reset(r.Body); err != nil {
 					gzipReaderPool.Put(reader)
 					http.Error(w, "Failed to read gzipped request body", http.StatusBadRequest)
@@ -43,14 +49,18 @@ func GzipMiddleware() func(http.Handler) http.Handler {
 
 				r.Body = reader
 				defer func() {
-					reader.Close()
+					_ = reader.Close()
 					gzipReaderPool.Put(reader)
 				}()
 			}
 
 			// response body is gzip
 			if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-				writer := gzipWriterPool.Get().(*gzip.Writer)
+				writer, ok := gzipWriterPool.Get().(*gzip.Writer)
+				if !ok {
+					http.Error(w, "Failed to get gzip writer", http.StatusInternalServerError)
+					return
+				}
 				writer.Reset(w)
 
 				gzipWriter := &gzipWriter{
@@ -61,7 +71,7 @@ func GzipMiddleware() func(http.Handler) http.Handler {
 				w = gzipWriter
 				w.Header().Set("Content-Encoding", "gzip")
 				defer func() {
-					writer.Close()
+					_ = writer.Close()
 					gzipWriterPool.Put(writer)
 				}()
 			}

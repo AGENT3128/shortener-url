@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"encoding/json"
@@ -12,6 +12,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers"
 	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers/mocks"
 	customMiddleware "github.com/AGENT3128/shortener-url/internal/controller/httpapi/middleware"
 	"github.com/AGENT3128/shortener-url/internal/dto"
@@ -26,10 +27,10 @@ func TestUserURLsHandler(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	handler, err := NewUserURLsHandler(
-		WithUserURLsUsecase(usecase),
-		WithUserURLsLogger(logger),
-		WithUserURLsBaseURL("http://localhost:8080"),
+	handler, err := handlers.NewUserURLsHandler(
+		handlers.WithUserURLsUsecase(usecase),
+		handlers.WithUserURLsLogger(logger),
+		handlers.WithUserURLsBaseURL("http://localhost:8080"),
 	)
 	require.NoError(t, err)
 
@@ -102,7 +103,11 @@ func TestUserURLsHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusNoContent,
 				contentType: "application/json",
-				response:    Response{Status: http.StatusNoContent, Message: "No Content", Data: "No URLs found"},
+				response: handlers.Response{
+					Status:  http.StatusNoContent,
+					Message: "No Content",
+					Data:    "No URLs found",
+				},
 			},
 			setup: func() {
 				usecase.EXPECT().GetUserURLs(gomock.Any(), gomock.Any()).Return(nil, nil)
@@ -117,7 +122,7 @@ func TestUserURLsHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusInternalServerError,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusInternalServerError,
 					Message: "Internal Server Error",
 					Data:    "Failed to get user URLs",
@@ -133,8 +138,8 @@ func TestUserURLsHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			test.setup()
-			req, err := http.NewRequest(test.request.method, test.request.path, nil)
-			require.NoError(t, err)
+			req, errRequest := http.NewRequest(test.request.method, test.request.path, nil)
+			require.NoError(t, errRequest)
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, req)
 
@@ -146,8 +151,8 @@ func TestUserURLsHandler(t *testing.T) {
 				err = json.NewDecoder(recorder.Body).Decode(&response)
 				require.NoError(t, err)
 				require.Equal(t, test.want.response, response)
-			case Response:
-				var response Response
+			case handlers.Response:
+				var response handlers.Response
 				err = json.NewDecoder(recorder.Body).Decode(&response)
 				require.NoError(t, err)
 				require.Equal(t, test.want.response, response)

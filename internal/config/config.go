@@ -8,6 +8,7 @@ import (
 	"github.com/caarlos0/env/v11"
 )
 
+// Config is the configuration for the application.
 type Config struct {
 	BaseURLAddress              string        `env:"BASE_URL"                        envDefault:"http://localhost:8080"` // base url for shortened urls
 	ReleaseMode                 string        `env:"RELEASE_MODE"                    envDefault:"debug"`                 // release mode. Available options: debug, release, test
@@ -27,6 +28,7 @@ type Config struct {
 	GracefulShutdownTimeout     time.Duration `env:"GRACEFUL_SHUTDOWN_TIMEOUT"       envDefault:"20s"`                   // graceful shutdown timeout
 }
 
+// NewConfig creates a new Config instance.
 func NewConfig() (*Config, error) {
 	// Create new config instance
 	cfg := &Config{}

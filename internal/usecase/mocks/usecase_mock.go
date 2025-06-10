@@ -70,6 +70,20 @@ func (mr *MockURLRepositoryMockRecorder) AddBatch(ctx, userID, urls any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBatch", reflect.TypeOf((*MockURLRepository)(nil).AddBatch), ctx, userID, urls)
 }
 
+// Close mocks base method.
+func (m *MockURLRepository) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockURLRepositoryMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockURLRepository)(nil).Close))
+}
+
 // GetByOriginalURL mocks base method.
 func (m *MockURLRepository) GetByOriginalURL(ctx context.Context, originalURL string) (string, error) {
 	m.ctrl.T.Helper()
@@ -387,4 +401,42 @@ func (m *MockURLDeleter) MarkDeletedBatch(ctx context.Context, userID string, sh
 func (mr *MockURLDeleterMockRecorder) MarkDeletedBatch(ctx, userID, shortURLs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkDeletedBatch", reflect.TypeOf((*MockURLDeleter)(nil).MarkDeletedBatch), ctx, userID, shortURLs)
+}
+
+// MockCloser is a mock of Closer interface.
+type MockCloser struct {
+	ctrl     *gomock.Controller
+	recorder *MockCloserMockRecorder
+	isgomock struct{}
+}
+
+// MockCloserMockRecorder is the mock recorder for MockCloser.
+type MockCloserMockRecorder struct {
+	mock *MockCloser
+}
+
+// NewMockCloser creates a new mock instance.
+func NewMockCloser(ctrl *gomock.Controller) *MockCloser {
+	mock := &MockCloser{ctrl: ctrl}
+	mock.recorder = &MockCloserMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCloser) EXPECT() *MockCloserMockRecorder {
+	return m.recorder
+}
+
+// Close mocks base method.
+func (m *MockCloser) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockCloserMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockCloser)(nil).Close))
 }

@@ -19,36 +19,42 @@ type batchShortenOptions struct {
 	baseURL string
 }
 
-type batchShortenOption func(options *batchShortenOptions) error
+// BatchShortenOption is the option for the batch shorten handler.
+type BatchShortenOption func(options *batchShortenOptions) error
 
+// BatchShortenHandler is the handler for the batch shorten.
 type BatchShortenHandler struct {
 	usecase BatchURLSaver
 	logger  *zap.Logger
 	baseURL string
 }
 
-func WithBatchShortenBaseURL(baseURL string) batchShortenOption {
+// WithBatchShortenBaseURL is the option for the batch shorten handler to set the base URL.
+func WithBatchShortenBaseURL(baseURL string) BatchShortenOption {
 	return func(options *batchShortenOptions) error {
 		options.baseURL = baseURL
 		return nil
 	}
 }
 
-func WithBatchShortenUsecase(usecase BatchURLSaver) batchShortenOption {
+// WithBatchShortenUsecase is the option for the batch shorten handler to set the usecase.
+func WithBatchShortenUsecase(usecase BatchURLSaver) BatchShortenOption {
 	return func(options *batchShortenOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
-func WithBatchShortenLogger(logger *zap.Logger) batchShortenOption {
+// WithBatchShortenLogger is the option for the batch shorten handler to set the logger.
+func WithBatchShortenLogger(logger *zap.Logger) BatchShortenOption {
 	return func(options *batchShortenOptions) error {
 		options.logger = logger.With(zap.String("handler", "BatchShortenHandler"))
 		return nil
 	}
 }
 
-func NewBatchShortenHandler(opts ...batchShortenOption) (*BatchShortenHandler, error) {
+// NewBatchShortenHandler creates a new batch shorten handler.
+func NewBatchShortenHandler(opts ...BatchShortenOption) (*BatchShortenHandler, error) {
 	options := &batchShortenOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -68,14 +74,17 @@ func NewBatchShortenHandler(opts ...batchShortenOption) (*BatchShortenHandler, e
 	}, nil
 }
 
+// Pattern is the pattern for the batch shorten.
 func (h *BatchShortenHandler) Pattern() string {
 	return "/api/shorten/batch"
 }
 
+// Method is the method for the batch shorten.
 func (h *BatchShortenHandler) Method() string {
 	return http.MethodPost
 }
 
+// HandlerFunc is the handler func for the batch shorten.
 func (h *BatchShortenHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.UserIDKey).(string)
@@ -94,8 +103,8 @@ func (h *BatchShortenHandler) HandlerFunc() http.HandlerFunc {
 		defer r.Body.Close()
 
 		var requests []dto.ShortenBatchRequest
-		if err := json.Unmarshal(body, &requests); err != nil {
-			h.logger.Error("Failed to unmarshal request body", zap.Error(err))
+		if errUnmarshal := json.Unmarshal(body, &requests); errUnmarshal != nil {
+			h.logger.Error("Failed to unmarshal request body", zap.Error(errUnmarshal))
 			JSONResponse(w, http.StatusBadRequest, "Failed to unmarshal request body")
 			return
 		}
@@ -133,7 +142,9 @@ func (h *BatchShortenHandler) HandlerFunc() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(responses)
+		if errEncode := json.NewEncoder(w).Encode(responses); errEncode != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }
 

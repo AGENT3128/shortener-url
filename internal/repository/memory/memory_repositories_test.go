@@ -1,4 +1,4 @@
-package memory
+package memory_test
 
 import (
 	"testing"
@@ -8,12 +8,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/AGENT3128/shortener-url/internal/entity"
+	"github.com/AGENT3128/shortener-url/internal/repository/memory"
 )
 
 func TestMemStorage_Add(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	tests := []struct {
 		name        string
@@ -40,12 +41,12 @@ func TestMemStorage_Add(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			shortURL, err := repo.Add(t.Context(), tt.userID, tt.shortURL, tt.originalURL)
+			shortURL, errAdd := repo.Add(t.Context(), tt.userID, tt.shortURL, tt.originalURL)
 			if tt.wantErr {
-				require.Error(t, err)
+				require.Error(t, errAdd)
 				return
 			}
-			require.NoError(t, err)
+			require.NoError(t, errAdd)
 			require.Equal(t, tt.shortURL, shortURL)
 		})
 	}
@@ -54,7 +55,7 @@ func TestMemStorage_Add(t *testing.T) {
 func TestMemStorage_GetByShortURL(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	// Prepare test data
 	shortURL := "test-short"
@@ -85,8 +86,8 @@ func TestMemStorage_GetByShortURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.GetByShortURL(t.Context(), tt.shortURL)
-			assert.Equal(t, tt.wantError, err)
+			got, errGet := repo.GetByShortURL(t.Context(), tt.shortURL)
+			assert.Equal(t, tt.wantError, errGet)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -95,7 +96,7 @@ func TestMemStorage_GetByShortURL(t *testing.T) {
 func TestMemStorage_GetByOriginalURL(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	// Prepare test data
 	shortURL := "test-short"
@@ -126,8 +127,8 @@ func TestMemStorage_GetByOriginalURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.GetByOriginalURL(t.Context(), tt.originalURL)
-			assert.Equal(t, tt.wantError, err)
+			got, errGet := repo.GetByOriginalURL(t.Context(), tt.originalURL)
+			assert.Equal(t, tt.wantError, errGet)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -136,7 +137,7 @@ func TestMemStorage_GetByOriginalURL(t *testing.T) {
 func TestMemStorage_AddBatch(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	urls := []entity.URL{
 		{
@@ -155,8 +156,8 @@ func TestMemStorage_AddBatch(t *testing.T) {
 
 	// Verify each URL was added correctly
 	for _, url := range urls {
-		got, err := repo.GetByShortURL(t.Context(), url.ShortURL)
-		require.NoError(t, err)
+		got, errGet := repo.GetByShortURL(t.Context(), url.ShortURL)
+		require.NoError(t, errGet)
 		assert.Equal(t, url.OriginalURL, got)
 	}
 }
@@ -164,7 +165,7 @@ func TestMemStorage_AddBatch(t *testing.T) {
 func TestMemStorage_GetUserURLs(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	userID1 := "user1"
 	userID2 := "user2"
@@ -211,12 +212,12 @@ func TestMemStorage_GetUserURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repo.GetUserURLs(t.Context(), tt.userID)
+			got, errGet := repo.GetUserURLs(t.Context(), tt.userID)
 			if tt.wantErr {
-				require.Error(t, err)
+				require.Error(t, errGet)
 				return
 			}
-			require.NoError(t, err)
+			require.NoError(t, errGet)
 			assert.Len(t, got, tt.want)
 		})
 	}
@@ -225,7 +226,7 @@ func TestMemStorage_GetUserURLs(t *testing.T) {
 func TestMemStorage_MarkDeletedBatch(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	userID := "user1"
 	urls := []entity.URL{
@@ -253,7 +254,7 @@ func TestMemStorage_MarkDeletedBatch(t *testing.T) {
 func TestMemStorage_Ping(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
-	repo := NewMemStorage(logger)
+	repo := memory.NewMemStorage(logger)
 
 	err = repo.Ping(t.Context())
 	require.NoError(t, err)

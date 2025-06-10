@@ -18,29 +18,34 @@ type shortenOptions struct {
 	usecase URLSaver
 }
 
-type shortenOption func(options *shortenOptions) error
+// ShortenOption is the option for the shorten handler.
+type ShortenOption func(options *shortenOptions) error
 
-func WithShortenBaseURL(baseURL string) shortenOption {
+// WithShortenBaseURL is the option for the shorten handler to set the base URL.
+func WithShortenBaseURL(baseURL string) ShortenOption {
 	return func(options *shortenOptions) error {
 		options.baseURL = baseURL
 		return nil
 	}
 }
 
-func WithShortenLogger(logger *zap.Logger) shortenOption {
+// WithShortenLogger is the option for the shorten handler to set the logger.
+func WithShortenLogger(logger *zap.Logger) ShortenOption {
 	return func(options *shortenOptions) error {
 		options.logger = logger
 		return nil
 	}
 }
 
-func WithShortenUsecase(usecase URLSaver) shortenOption {
+// WithShortenUsecase is the option for the shorten handler to set the usecase.
+func WithShortenUsecase(usecase URLSaver) ShortenOption {
 	return func(options *shortenOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
+// ShortenHandler is the handler for the shorten.
 type ShortenHandler struct {
 	baseURL string
 	logger  *zap.Logger
@@ -48,7 +53,7 @@ type ShortenHandler struct {
 }
 
 // NewShortenHandler creates a new instance of ShortenHandler.
-func NewShortenHandler(opts ...shortenOption) (*ShortenHandler, error) {
+func NewShortenHandler(opts ...ShortenOption) (*ShortenHandler, error) {
 	options := &shortenOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -83,6 +88,7 @@ func (h *ShortenHandler) Method() string {
 	return http.MethodPost
 }
 
+// HandlerFunc is the handler func for the shorten.
 func (h *ShortenHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.UserIDKey).(string)

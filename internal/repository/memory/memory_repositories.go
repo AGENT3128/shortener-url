@@ -9,12 +9,14 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/entity"
 )
 
+// MemStorage is the memory storage for the URL.
 type MemStorage struct {
 	mu     sync.RWMutex
 	urls   map[string]entity.URL
 	logger *zap.Logger
 }
 
+// NewMemStorage creates a new MemStorage.
 func NewMemStorage(logger *zap.Logger) *MemStorage {
 	logger = logger.With(zap.String("storage", "memory"))
 	return &MemStorage{
@@ -23,7 +25,8 @@ func NewMemStorage(logger *zap.Logger) *MemStorage {
 	}
 }
 
-func (m *MemStorage) Add(ctx context.Context, userID, shortURL, originalURL string) (string, error) {
+// Add adds a URL.
+func (m *MemStorage) Add(_ context.Context, userID, shortURL, originalURL string) (string, error) {
 	const method = "Add"
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -37,7 +40,8 @@ func (m *MemStorage) Add(ctx context.Context, userID, shortURL, originalURL stri
 	return shortURL, nil
 }
 
-func (m *MemStorage) GetByShortURL(ctx context.Context, shortURL string) (string, error) {
+// GetByShortURL gets the original URL by the short URL.
+func (m *MemStorage) GetByShortURL(_ context.Context, shortURL string) (string, error) {
 	const method = "GetByShortURL"
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -58,7 +62,8 @@ func (m *MemStorage) GetByShortURL(ctx context.Context, shortURL string) (string
 	return url.OriginalURL, nil
 }
 
-func (m *MemStorage) GetByOriginalURL(ctx context.Context, originalURL string) (string, error) {
+// GetByOriginalURL gets the short URL by the original URL.
+func (m *MemStorage) GetByOriginalURL(_ context.Context, originalURL string) (string, error) {
 	const method = "GetByOriginalURL"
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -72,7 +77,8 @@ func (m *MemStorage) GetByOriginalURL(ctx context.Context, originalURL string) (
 	return "", entity.ErrURLNotFound
 }
 
-func (m *MemStorage) AddBatch(ctx context.Context, userID string, urls []entity.URL) error {
+// AddBatch adds a batch of URLs.
+func (m *MemStorage) AddBatch(_ context.Context, userID string, urls []entity.URL) error {
 	const method = "AddBatch"
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -94,12 +100,14 @@ func (m *MemStorage) AddBatch(ctx context.Context, userID string, urls []entity.
 	return nil
 }
 
-func (m *MemStorage) Ping(ctx context.Context) error {
+// Ping pings the memory storage.
+func (m *MemStorage) Ping(_ context.Context) error {
 	// not needed for memory storage
 	return nil
 }
 
-func (m *MemStorage) GetUserURLs(ctx context.Context, userID string) ([]entity.URL, error) {
+// GetUserURLs gets user URLs.
+func (m *MemStorage) GetUserURLs(_ context.Context, userID string) ([]entity.URL, error) {
 	const method = "GetUserURLs"
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -115,7 +123,7 @@ func (m *MemStorage) GetUserURLs(ctx context.Context, userID string) ([]entity.U
 }
 
 // MarkDeletedBatch marks URLs as deleted in batch.
-func (m *MemStorage) MarkDeletedBatch(ctx context.Context, userID string, shortURLs []string) error {
+func (m *MemStorage) MarkDeletedBatch(_ context.Context, userID string, shortURLs []string) error {
 	const method = "MarkDeletedBatch"
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -129,5 +137,10 @@ func (m *MemStorage) MarkDeletedBatch(ctx context.Context, userID string, shortU
 		}
 	}
 
+	return nil
+}
+
+// Close closes the repository.
+func (m *MemStorage) Close() error {
 	return nil
 }

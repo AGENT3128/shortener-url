@@ -7,20 +7,20 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
+
+	"maps"
 
 	"github.com/AGENT3128/shortener-url/internal/entity"
 )
 
-type FileStorage struct {
-	file     *os.File
-	mu       sync.RWMutex
-	urls     map[string]URLData
-	lastUUID int
-	logger   *zap.Logger
-}
+const (
+	defaultSaveTicker = 10 * time.Second
+)
 
+// URLData is the data for the URL.
 type URLData struct {
 	OriginalURL string
 	UUID        string
@@ -28,35 +28,208 @@ type URLData struct {
 	IsDeleted   bool
 }
 
+// URLRecord is the record for the URL.
 type URLRecord struct {
 	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
 
-func NewFileStorage(path string, logger *zap.Logger) (*FileStorage, error) {
-	logger = logger.With(zap.String("storage", "file"))
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		logger.Error("failed to open file storage", zap.Error(err))
-		return nil, err
-	}
-
-	fs := &FileStorage{
-		file:     file,
-		urls:     make(map[string]URLData),
-		lastUUID: 0,
-		logger:   logger,
-	}
-	if err := fs.loadFromFile(); err != nil {
-		fs.logger.Error("failed to load file storage", zap.Error(err))
-		return nil, err
-	}
-	return fs, nil
+// Memento represents a snapshot of the storage state.
+type Memento struct {
+	URLs     map[string]URLData
+	LastUUID int
 }
 
-func (f *FileStorage) Add(ctx context.Context, userID, shortID, originalURL string) (string, error) {
-	const method = "Add"
+// Caretaker handles saving and restoring storage state.
+type Caretaker struct {
+	filePath    string
+	logger      *zap.Logger
+	saveTimeout time.Duration
+}
+
+// Storage is the file storage for the URL.
+type Storage struct {
+	mu         sync.RWMutex
+	urls       map[string]URLData
+	lastUUID   int
+	logger     *zap.Logger
+	caretaker  *Caretaker
+	isDirty    bool
+	stopSaving chan struct{}
+}
+
+// Option is the option for the FileStorage.
+type Option func(*Caretaker)
+
+// WithSaveTicker is the option for the FileStorage.
+func WithSaveTicker(ticker time.Duration) Option {
+	return func(c *Caretaker) {
+		c.saveTimeout = ticker
+	}
+}
+
+// NewFileStorage creates a new FileStorage.
+func NewFileStorage(path string, logger *zap.Logger, opts ...Option) (*Storage, error) {
+	logger = logger.With(zap.String("storage", "file"))
+
+	caretaker := &Caretaker{
+		filePath:    path,
+		logger:      logger,
+		saveTimeout: defaultSaveTicker,
+	}
+
+	for _, opt := range opts {
+		opt(caretaker)
+	}
+
+	storage := &Storage{
+		urls:       make(map[string]URLData),
+		lastUUID:   0,
+		logger:     logger,
+		caretaker:  caretaker,
+		isDirty:    false,
+		stopSaving: make(chan struct{}),
+	}
+
+	if err := storage.restore(); err != nil {
+		return nil, err
+	}
+
+	// Start periodic saving
+	go storage.periodicSave()
+
+	return storage, nil
+}
+
+// createMemento creates a snapshot of the current state.
+func (f *Storage) createMemento() *Memento {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	urlsCopy := make(map[string]URLData)
+	maps.Copy(urlsCopy, f.urls)
+
+	return &Memento{
+		URLs:     urlsCopy,
+		LastUUID: f.lastUUID,
+	}
+}
+
+// restoreFromMemento restores state from a memento.
+func (f *Storage) restoreFromMemento(m *Memento) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.urls = m.URLs
+	f.lastUUID = m.LastUUID
+}
+
+// periodicSave periodically saves state if it's dirty.
+func (f *Storage) periodicSave() {
+	ticker := time.NewTicker(f.caretaker.saveTimeout)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if f.isDirty {
+				if err := f.save(); err != nil {
+					f.logger.Error("periodic save failed", zap.Error(err))
+				}
+			}
+		case <-f.stopSaving:
+			return
+		}
+	}
+}
+
+// save saves the current state to file.
+func (f *Storage) save() error {
+	memento := f.createMemento()
+
+	file, err := os.OpenFile(f.caretaker.filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+
+	for shortURL, urlData := range memento.URLs {
+		record := URLRecord{
+			UUID:        urlData.UUID,
+			ShortURL:    shortURL,
+			OriginalURL: urlData.OriginalURL,
+		}
+
+		data, errMarshal := json.Marshal(record)
+		if errMarshal != nil {
+			continue
+		}
+
+		if _, errWrite := writer.Write(data); errWrite != nil {
+			return errWrite
+		}
+		if errWrite := writer.WriteByte('\n'); errWrite != nil {
+			return errWrite
+		}
+	}
+
+	if errFlush := writer.Flush(); errFlush != nil {
+		return errFlush
+	}
+
+	f.mu.Lock()
+	f.isDirty = false
+	f.mu.Unlock()
+
+	return nil
+}
+
+// restore loads the state from file.
+func (f *Storage) restore() error {
+	file, err := os.OpenFile(f.caretaker.filePath, os.O_RDONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	urls := make(map[string]URLData)
+	lastUUID := 0
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var record URLRecord
+		if errUnmarshal := json.Unmarshal(scanner.Bytes(), &record); errUnmarshal != nil {
+			continue
+		}
+
+		urls[record.ShortURL] = URLData{
+			OriginalURL: record.OriginalURL,
+			UUID:        record.UUID,
+		}
+
+		if uuid, errAtoi := strconv.Atoi(record.UUID); errAtoi == nil && uuid > lastUUID {
+			lastUUID = uuid
+		}
+	}
+
+	if errScan := scanner.Err(); errScan != nil {
+		return errScan
+	}
+
+	memento := &Memento{
+		URLs:     urls,
+		LastUUID: lastUUID,
+	}
+
+	f.restoreFromMemento(memento)
+	return nil
+}
+
+// Add adds a URL.
+func (f *Storage) Add(_ context.Context, userID, shortID, originalURL string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -69,13 +242,12 @@ func (f *FileStorage) Add(ctx context.Context, userID, shortID, originalURL stri
 		UserID:      userID,
 	}
 
-	if err := f.saveToFile(); err != nil {
-		f.logger.Error(method, zap.Error(err))
-	}
+	f.isDirty = true
 	return shortID, nil
 }
 
-func (f *FileStorage) GetByShortURL(ctx context.Context, shortURL string) (string, error) {
+// GetByShortURL gets the original URL by the short URL.
+func (f *Storage) GetByShortURL(_ context.Context, shortURL string) (string, error) {
 	const method = "GetByShortURL"
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -91,7 +263,8 @@ func (f *FileStorage) GetByShortURL(ctx context.Context, shortURL string) (strin
 	return url.OriginalURL, nil
 }
 
-func (f *FileStorage) GetByOriginalURL(ctx context.Context, originalURL string) (string, error) {
+// GetByOriginalURL gets the short URL by the original URL.
+func (f *Storage) GetByOriginalURL(_ context.Context, originalURL string) (string, error) {
 	const method = "GetByOriginalURL"
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -105,7 +278,8 @@ func (f *FileStorage) GetByOriginalURL(ctx context.Context, originalURL string) 
 	return "", entity.ErrURLNotFound
 }
 
-func (f *FileStorage) AddBatch(ctx context.Context, userID string, urls []entity.URL) error {
+// AddBatch adds a batch of URLs.
+func (f *Storage) AddBatch(_ context.Context, userID string, urls []entity.URL) error {
 	const method = "AddBatch"
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -119,90 +293,35 @@ func (f *FileStorage) AddBatch(ctx context.Context, userID string, urls []entity
 			UUID:        uuid,
 			UserID:      userID,
 		}
+		f.logger.Info(
+			method,
+			zap.String("shortURL", url.ShortURL),
+			zap.String("originalURL", url.OriginalURL),
+			zap.String("userID", userID),
+		)
 	}
 
-	if err := f.saveToFile(); err != nil {
-		f.logger.Error(method, zap.Error(err))
-		return err
-	}
-
+	f.isDirty = true
 	return nil
 }
 
-func (f *FileStorage) loadFromFile() error {
-	const method = "loadFromFile"
-	if _, err := f.file.Seek(0, 0); err != nil {
-		f.logger.Error(method, zap.Error(err))
-		return err
+// Close closes the file storage.
+func (f *Storage) Close() error {
+	close(f.stopSaving)
+	if f.isDirty {
+		return f.save()
 	}
-
-	scanner := bufio.NewScanner(f.file)
-	for scanner.Scan() {
-		var record URLRecord
-		if err := json.Unmarshal(scanner.Bytes(), &record); err != nil {
-			f.logger.Error(method, zap.Error(err))
-			continue
-		}
-
-		f.urls[record.ShortURL] = URLData{
-			OriginalURL: record.OriginalURL,
-			UUID:        record.UUID,
-		}
-
-		if uuid, err := strconv.Atoi(record.UUID); err == nil && uuid > f.lastUUID {
-			f.lastUUID = uuid
-		}
-	}
-	return scanner.Err()
+	return nil
 }
 
-func (f *FileStorage) saveToFile() error {
-	const method = "saveToFile"
-	if err := f.file.Truncate(0); err != nil {
-		f.logger.Error(method, zap.Error(err))
-		return err
-	}
-	if _, err := f.file.Seek(0, 0); err != nil {
-		f.logger.Error(method, zap.Error(err))
-		return err
-	}
-
-	writer := bufio.NewWriter(f.file)
-	for shortURL, urlData := range f.urls {
-		record := URLRecord{
-			UUID:        urlData.UUID,
-			ShortURL:    shortURL,
-			OriginalURL: urlData.OriginalURL,
-		}
-		data, err := json.Marshal(record)
-		if err != nil {
-			continue
-		}
-		_, err = writer.Write(data)
-		if err != nil {
-			f.logger.Error(method, zap.Error(err))
-			continue
-		}
-		err = writer.WriteByte('\n')
-		if err != nil {
-			f.logger.Error(method, zap.Error(err))
-			continue
-		}
-		f.logger.Info(method, zap.Any("record", record))
-	}
-	return writer.Flush()
-}
-
-func (f *FileStorage) Close() error {
-	return f.file.Close()
-}
-
-func (f *FileStorage) Ping(ctx context.Context) error {
+// Ping pings the file storage.
+func (f *Storage) Ping(_ context.Context) error {
 	// not needed for file storage
 	return nil
 }
 
-func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) ([]entity.URL, error) {
+// GetUserURLs gets user URLs.
+func (f *Storage) GetUserURLs(_ context.Context, userID string) ([]entity.URL, error) {
 	const method = "GetUserURLs"
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -218,26 +337,18 @@ func (f *FileStorage) GetUserURLs(ctx context.Context, userID string) ([]entity.
 }
 
 // MarkDeletedBatch marks URLs as deleted in batch.
-func (f *FileStorage) MarkDeletedBatch(ctx context.Context, userID string, shortURLs []string) error {
+func (f *Storage) MarkDeletedBatch(_ context.Context, userID string, shortURLs []string) error {
 	const method = "MarkDeletedBatch"
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	modified := false
 	for _, shortURL := range shortURLs {
 		urlData, exists := f.urls[shortURL]
 		if exists && urlData.UserID == userID {
 			urlData.IsDeleted = true
 			f.urls[shortURL] = urlData
-			modified = true
+			f.isDirty = true
 			f.logger.Info(method, zap.String("shortURL", shortURL), zap.String("userID", userID))
-		}
-	}
-
-	if modified {
-		if err := f.saveToFile(); err != nil {
-			f.logger.Error(method, zap.Error(err))
-			return err
 		}
 	}
 

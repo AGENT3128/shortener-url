@@ -1,4 +1,4 @@
-package middleware
+package middleware_test
 
 import (
 	"bytes"
@@ -16,6 +16,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/middleware"
 )
 
 type ShortenRequest struct {
@@ -26,12 +28,12 @@ type ShortenResponse struct {
 	Result string `json:"result"`
 }
 
-func TestGzipMiddleware(t *testing.T) {
+func TestGzipMiddleware(t *testing.T) { //nolint:gocognit // test code
 	// context for test
 	ctx := t.Context()
 
 	router := chi.NewRouter()
-	router.Use(GzipMiddleware())
+	router.Use(middleware.GzipMiddleware())
 
 	// test handler without business logic
 	router.Post("/test", func(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +45,7 @@ func TestGzipMiddleware(t *testing.T) {
 		}
 		defer r.Body.Close()
 
-		if err := json.Unmarshal(body, &req); err != nil {
+		if errUnmarshal := json.Unmarshal(body, &req); errUnmarshal != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		}
@@ -129,8 +131,8 @@ func TestGzipMiddleware(t *testing.T) {
 				if tt.acceptGzip {
 					assert.Equal(t, "gzip", resp.Header.Get("Content-Encoding"))
 
-					reader, err := gzip.NewReader(resp.Body)
-					require.NoError(t, err)
+					reader, errGzip := gzip.NewReader(resp.Body)
+					require.NoError(t, errGzip)
 
 					responseBody, err = io.ReadAll(reader)
 					require.NoError(t, err)

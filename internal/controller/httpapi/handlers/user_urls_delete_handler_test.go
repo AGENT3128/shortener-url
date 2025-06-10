@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"bytes"
@@ -13,6 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers"
 	"github.com/AGENT3128/shortener-url/internal/controller/httpapi/handlers/mocks"
 	customMiddleware "github.com/AGENT3128/shortener-url/internal/controller/httpapi/middleware"
 )
@@ -25,9 +26,9 @@ func TestUserURLsDeleteHandler(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	handler, err := NewUserURLsDeleteHandler(
-		WithUserURLsDeleteUsecase(usecase),
-		WithUserURLsDeleteLogger(logger),
+	handler, err := handlers.NewUserURLsDeleteHandler(
+		handlers.WithUserURLsDeleteUsecase(usecase),
+		handlers.WithUserURLsDeleteLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -69,7 +70,7 @@ func TestUserURLsDeleteHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusAccepted,
 				contentType: "application/json",
-				response:    Response{Status: http.StatusAccepted, Message: "Accepted", Data: "success"},
+				response:    handlers.Response{Status: http.StatusAccepted, Message: "Accepted", Data: "success"},
 			},
 			setup: func() {
 				usecase.EXPECT().
@@ -87,7 +88,7 @@ func TestUserURLsDeleteHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusBadRequest,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusBadRequest,
 					Message: "Bad Request",
 					Data:    "invalid request format",
@@ -107,7 +108,7 @@ func TestUserURLsDeleteHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusBadRequest,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusBadRequest,
 					Message: "Bad Request",
 					Data:    "no URLs provided for deletion",
@@ -121,7 +122,7 @@ func TestUserURLsDeleteHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusInternalServerError,
 				contentType: "application/json",
-				response: Response{
+				response: handlers.Response{
 					Status:  http.StatusInternalServerError,
 					Message: "Internal Server Error",
 					Data:    "failed to delete URLs",
@@ -142,11 +143,11 @@ func TestUserURLsDeleteHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			test.setup()
-			body, err := json.Marshal(test.request.body)
-			require.NoError(t, err)
+			body, errMarshal := json.Marshal(test.request.body)
+			require.NoError(t, errMarshal)
 
-			req, err := http.NewRequest(test.request.method, test.request.path, bytes.NewReader(body))
-			require.NoError(t, err)
+			req, errRequest := http.NewRequest(test.request.method, test.request.path, bytes.NewReader(body))
+			require.NoError(t, errRequest)
 
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, req)
@@ -154,8 +155,8 @@ func TestUserURLsDeleteHandler(t *testing.T) {
 			require.Equal(t, test.want.statusCode, recorder.Code)
 			require.Equal(t, test.want.contentType, recorder.Header().Get("Content-Type"))
 			switch test.want.response.(type) {
-			case Response:
-				var response Response
+			case handlers.Response:
+				var response handlers.Response
 				err = json.NewDecoder(recorder.Body).Decode(&response)
 				require.NoError(t, err)
 				require.Equal(t, test.want.response, response)

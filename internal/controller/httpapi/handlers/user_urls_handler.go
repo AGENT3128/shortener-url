@@ -18,36 +18,42 @@ type userURLsOptions struct {
 	baseURL string
 }
 
-type userURLsOption func(options *userURLsOptions) error
+// UserURLsOption is the option for the user URLs handler.
+type UserURLsOption func(options *userURLsOptions) error
 
+// UserURLsHandler is the handler for the user URLs.
 type UserURLsHandler struct {
 	usecase UserURLGetter
 	logger  *zap.Logger
 	baseURL string
 }
 
-func WithUserURLsBaseURL(baseURL string) userURLsOption {
+// WithUserURLsBaseURL is the option for the user URLs handler to set the base URL.
+func WithUserURLsBaseURL(baseURL string) UserURLsOption {
 	return func(options *userURLsOptions) error {
 		options.baseURL = baseURL
 		return nil
 	}
 }
 
-func WithUserURLsUsecase(usecase UserURLGetter) userURLsOption {
+// WithUserURLsUsecase is the option for the user URLs handler to set the usecase.
+func WithUserURLsUsecase(usecase UserURLGetter) UserURLsOption {
 	return func(options *userURLsOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
-func WithUserURLsLogger(logger *zap.Logger) userURLsOption {
+// WithUserURLsLogger is the option for the user URLs handler to set the logger.
+func WithUserURLsLogger(logger *zap.Logger) UserURLsOption {
 	return func(options *userURLsOptions) error {
 		options.logger = logger.With(zap.String("handler", "UserURLsHandler"))
 		return nil
 	}
 }
 
-func NewUserURLsHandler(opts ...userURLsOption) (*UserURLsHandler, error) {
+// NewUserURLsHandler creates a new user URLs handler.
+func NewUserURLsHandler(opts ...UserURLsOption) (*UserURLsHandler, error) {
 	options := &userURLsOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -67,14 +73,17 @@ func NewUserURLsHandler(opts ...userURLsOption) (*UserURLsHandler, error) {
 	}, nil
 }
 
+// Pattern is the pattern for the user URLs.
 func (h *UserURLsHandler) Pattern() string {
 	return "/api/user/urls"
 }
 
+// Method is the method for the user URLs.
 func (h *UserURLsHandler) Method() string {
 	return http.MethodGet
 }
 
+// HandlerFunc is the handler func for the user URLs.
 func (h *UserURLsHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.UserIDKey).(string)
@@ -97,7 +106,9 @@ func (h *UserURLsHandler) HandlerFunc() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(h.toResponse(urls))
+		if errEncode := json.NewEncoder(w).Encode(h.toResponse(urls)); errEncode != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }
 

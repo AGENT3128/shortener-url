@@ -14,6 +14,7 @@ import (
 	"github.com/AGENT3128/shortener-url/internal/entity"
 )
 
+// APIShortenHandler is the handler for the API shorten endpoint.
 type APIShortenHandler struct {
 	usecase URLSaver
 	logger  *zap.Logger
@@ -26,29 +27,35 @@ type apiShortenOptions struct {
 	baseURL string
 }
 
-type apiShortenOption func(options *apiShortenOptions) error
+// APIShortenOption is the option for the APIShortenHandler.
+type APIShortenOption func(options *apiShortenOptions) error
 
-func WithAPIShortenUsecase(usecase URLSaver) apiShortenOption {
+// WithAPIShortenUsecase is the option for the APIShortenHandler to set the usecase.
+func WithAPIShortenUsecase(usecase URLSaver) APIShortenOption {
 	return func(options *apiShortenOptions) error {
 		options.usecase = usecase
 		return nil
 	}
 }
 
-func WithAPIShortenLogger(logger *zap.Logger) apiShortenOption {
+// WithAPIShortenLogger is the option for the APIShortenHandler to set the logger.
+func WithAPIShortenLogger(logger *zap.Logger) APIShortenOption {
 	return func(options *apiShortenOptions) error {
 		options.logger = logger.With(zap.String("handler", "APIShortenHandler"))
 		return nil
 	}
 }
 
-func WithAPIShortenBaseURL(baseURL string) apiShortenOption {
+// WithAPIShortenBaseURL is the option for the APIShortenHandler to set the base URL.
+func WithAPIShortenBaseURL(baseURL string) APIShortenOption {
 	return func(options *apiShortenOptions) error {
 		options.baseURL = baseURL
 		return nil
 	}
 }
-func NewAPIShortenHandler(opts ...apiShortenOption) (*APIShortenHandler, error) {
+
+// NewAPIShortenHandler creates a new APIShortenHandler instance.
+func NewAPIShortenHandler(opts ...APIShortenOption) (*APIShortenHandler, error) {
 	options := &apiShortenOptions{}
 	for _, opt := range opts {
 		if err := opt(options); err != nil {
@@ -69,14 +76,17 @@ func NewAPIShortenHandler(opts ...apiShortenOption) (*APIShortenHandler, error) 
 	}, nil
 }
 
+// Pattern is the pattern for the APIShortenHandler.
 func (h *APIShortenHandler) Pattern() string {
 	return "/api/shorten"
 }
 
+// Method is the method for the APIShortenHandler.
 func (h *APIShortenHandler) Method() string {
 	return http.MethodPost
 }
 
+// HandlerFunc is the handler function for the APIShortenHandler.
 func (h *APIShortenHandler) HandlerFunc() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.UserIDKey).(string)
@@ -94,7 +104,7 @@ func (h *APIShortenHandler) HandlerFunc() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		if err := json.Unmarshal(body, &request); err != nil {
+		if errUnmarshal := json.Unmarshal(body, &request); errUnmarshal != nil {
 			JSONResponse(w, http.StatusBadRequest, "Failed to unmarshal request body")
 			return
 		}

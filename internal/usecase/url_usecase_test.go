@@ -1,4 +1,4 @@
-package usecase
+package usecase_test
 
 import (
 	"context"
@@ -9,12 +9,12 @@ import (
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
 	"github.com/AGENT3128/shortener-url/internal/entity"
+	"github.com/AGENT3128/shortener-url/internal/usecase"
 	"github.com/AGENT3128/shortener-url/internal/usecase/mocks"
 	"github.com/AGENT3128/shortener-url/internal/worker"
 )
@@ -27,9 +27,9 @@ func TestURLUsecase_Add(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -134,17 +134,17 @@ func TestURLUsecase_Add(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
-			got, err := usecase.Add(ctx, tt.url.UserID, tt.url.OriginalURL)
+			got, errAdd := usecase.Add(ctx, tt.url.UserID, tt.url.OriginalURL)
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, errAdd)
 				if tt.errType != nil {
-					assert.ErrorIs(t, err, tt.errType)
+					require.ErrorIs(t, errAdd, tt.errType)
 				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, errAdd)
 			}
-			assert.Equal(t, tt.want, got)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -157,9 +157,9 @@ func TestURLUsecase_GetByOriginalURL(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -213,16 +213,16 @@ func TestURLUsecase_GetByOriginalURL(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
-			got, err := usecase.GetByOriginalURL(ctx, tt.originalURL)
+			got, errGet := usecase.GetByOriginalURL(ctx, tt.originalURL)
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, errGet)
 				if tt.errType != nil {
-					assert.ErrorIs(t, err, tt.errType)
+					require.ErrorIs(t, errGet, tt.errType)
 				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, errGet)
 			}
-			assert.Equal(t, tt.want, got)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -235,9 +235,9 @@ func TestURLUsecase_GetByShortURL(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -278,13 +278,13 @@ func TestURLUsecase_GetByShortURL(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
-			got, err := usecase.GetByShortURL(ctx, tt.shortURL)
+			got, errGet := usecase.GetByShortURL(ctx, tt.shortURL)
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, errGet)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, errGet)
 			}
-			assert.Equal(t, tt.want, got)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -297,9 +297,9 @@ func TestURLUsecase_AddBatch(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -359,12 +359,12 @@ func TestURLUsecase_AddBatch(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
-			got, err := usecase.AddBatch(ctx, tt.userID, tt.urls)
+			got, errAdd := usecase.AddBatch(ctx, tt.userID, tt.urls)
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, errAdd)
 			} else {
-				assert.NoError(t, err)
-				assert.Len(t, got, len(tt.urls))
+				require.NoError(t, errAdd)
+				require.Len(t, got, len(tt.urls))
 			}
 		})
 	}
@@ -378,9 +378,9 @@ func TestURLUsecase_GetUserURLs(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -427,12 +427,12 @@ func TestURLUsecase_GetUserURLs(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
-			got, err := usecase.GetUserURLs(ctx, tt.userID)
+			got, errGet := usecase.GetUserURLs(ctx, tt.userID)
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, errGet)
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
+				require.NoError(t, errGet)
+				require.Equal(t, tt.want, got)
 			}
 		})
 	}
@@ -447,10 +447,10 @@ func TestURLUsecase_DeleteUserURLs(t *testing.T) {
 	require.NoError(t, err)
 	deleteWorker := worker.NewDeleteWorker(urlRepositoryMock, logger)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
-		WithDeleteWorker(deleteWorker),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
+		usecase.WithDeleteWorker(deleteWorker),
 	)
 	require.NoError(t, err)
 
@@ -469,6 +469,9 @@ func TestURLUsecase_DeleteUserURLs(t *testing.T) {
 				urlRepositoryMock.EXPECT().
 					MarkDeletedBatch(gomock.Any(), "user1", []string{"abc123", "def456"}).
 					Return(nil)
+				urlRepositoryMock.EXPECT().
+					Close().
+					Return(nil)
 			},
 			wantErr: false,
 		},
@@ -482,11 +485,11 @@ func TestURLUsecase_DeleteUserURLs(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
-			err := usecase.DeleteUserURLs(ctx, tt.userID, tt.shortURLs)
+			errDelete := usecase.DeleteUserURLs(ctx, tt.userID, tt.shortURLs)
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, errDelete)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, errDelete)
 			}
 			time.Sleep(100 * time.Millisecond)
 		})
@@ -503,9 +506,9 @@ func TestURLUsecase_Ping(t *testing.T) {
 	logger, err := zap.NewDevelopment()
 	require.NoError(t, err)
 
-	usecase, err := NewURLUsecase(
-		WithURLUsecaseRepository(urlRepositoryMock),
-		WithURLUsecaseLogger(logger),
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
 	)
 	require.NoError(t, err)
 
@@ -540,12 +543,13 @@ func TestURLUsecase_Ping(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 
-			err := usecase.Ping(ctx)
+			pingErr := usecase.Ping(ctx)
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, pingErr)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, pingErr)
 			}
+			time.Sleep(100 * time.Millisecond)
 		})
 	}
 }
