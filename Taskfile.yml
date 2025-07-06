@@ -262,3 +262,12 @@ tasks:
     cmds:
       - |
         sh -c "go tool pprof -proto -output=profiles/{{.PROFILE_NAME}}.pprof http://localhost:{{.SERVER_PORT}}/debug/pprof/heap?seconds=15"
+
+  staticlint:
+    desc: Run static lint
+    cmds:
+      - |
+        export PATH=$PATH:$(go env GOPATH)/bin
+        mkdir -p {{.BUILD_DIR}}
+        go build -o {{.BUILD_DIR}}/staticlint cmd/staticlint/main.go
+        {{.BUILD_DIR}}/staticlint ./...
