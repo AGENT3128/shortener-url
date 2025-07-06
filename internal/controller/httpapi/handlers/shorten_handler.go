@@ -13,9 +13,9 @@ import (
 )
 
 type shortenOptions struct {
-	baseURL string
-	logger  *zap.Logger
 	usecase URLSaver
+	logger  *zap.Logger
+	baseURL string
 }
 
 // ShortenOption is the option for the shorten handler.
@@ -47,9 +47,9 @@ func WithShortenUsecase(usecase URLSaver) ShortenOption {
 
 // ShortenHandler is the handler for the shorten.
 type ShortenHandler struct {
-	baseURL string
-	logger  *zap.Logger
 	usecase URLSaver
+	logger  *zap.Logger
+	baseURL string
 }
 
 // NewShortenHandler creates a new instance of ShortenHandler.

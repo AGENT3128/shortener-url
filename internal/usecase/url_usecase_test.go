@@ -34,12 +34,12 @@ func TestURLUsecase_Add(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name    string
+		errType error
 		url     *entity.URL
 		setup   func()
-		wantErr bool
-		errType error
+		name    string
 		want    string
+		wantErr bool
 	}{
 		{
 			name: "success save url",
@@ -164,12 +164,12 @@ func TestURLUsecase_GetByOriginalURL(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
+		errType     error
+		setup       func()
 		name        string
 		originalURL string
-		setup       func()
 		want        string
 		wantErr     bool
-		errType     error
 	}{
 		{
 			name:        "success get url",
@@ -455,10 +455,10 @@ func TestURLUsecase_DeleteUserURLs(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
+		setup     func()
 		name      string
 		userID    string
 		shortURLs []string
-		setup     func()
 		wantErr   bool
 	}{
 		{
@@ -513,8 +513,8 @@ func TestURLUsecase_Ping(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name    string
 		setup   func()
+		name    string
 		wantErr bool
 	}{
 		{

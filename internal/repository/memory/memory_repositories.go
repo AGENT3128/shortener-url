@@ -11,9 +11,9 @@ import (
 
 // MemStorage is the memory storage for the URL.
 type MemStorage struct {
-	mu     sync.RWMutex
 	urls   map[string]entity.URL
 	logger *zap.Logger
+	mu     sync.RWMutex
 }
 
 // NewMemStorage creates a new MemStorage.

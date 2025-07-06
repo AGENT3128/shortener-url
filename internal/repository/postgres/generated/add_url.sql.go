@@ -17,10 +17,10 @@ RETURNING short_url
 `
 
 type AddURLParams struct {
+	CreatedAt   time.Time `db:"created_at" json:"created_at"`
 	UserID      string    `db:"user_id" json:"user_id"`
 	ShortUrl    string    `db:"short_url" json:"short_url"`
 	OriginalUrl string    `db:"original_url" json:"original_url"`
-	CreatedAt   time.Time `db:"created_at" json:"created_at"`
 }
 
 func (q *Queries) AddURL(ctx context.Context, arg AddURLParams) (string, error) {

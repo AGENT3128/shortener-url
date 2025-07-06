@@ -50,15 +50,15 @@ func TestUserURLsDeleteHandler(t *testing.T) {
 		method string
 	}
 	type want struct {
-		statusCode  int
-		contentType string
 		response    any
+		contentType string
+		statusCode  int
 	}
 	tests := []struct {
-		name    string
-		request request
-		want    want
 		setup   func()
+		request request
+		name    string
+		want    want
 	}{
 		{
 			name: "success delete urls",

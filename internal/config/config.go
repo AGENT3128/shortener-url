@@ -15,12 +15,12 @@ type Config struct {
 	LogLevel                    string        `env:"LOG_LEVEL"                       envDefault:"info"`                  // log level
 	FileStoragePath             string        `env:"FILE_STORAGE_PATH"               envDefault:""`                      // file storage path
 	DatabaseDSN                 string        `env:"DATABASE_DSN"                    envDefault:""`                      // database dsn
+	HTTPServerAddress           string        `env:"HTTP_SERVER_ADDRESS"             envDefault:"localhost:8080"`        // http server address
 	DatabaseMaxConns            int           `env:"DATABASE_MAX_CONNS"              envDefault:"10"`                    // database max conns
 	DatabaseMinConns            int           `env:"DATABASE_MIN_CONNS"              envDefault:"2"`                     // database min conns
 	DatabaseConnMaxLifetime     time.Duration `env:"DATABASE_CONN_MAX_LIFETIME"      envDefault:"10s"`                   // database connection max lifetime
 	DatabaseConnMaxIdleTime     time.Duration `env:"DATABASE_CONN_MAX_IDLE_TIME"     envDefault:"10s"`                   // database connection max idle time
 	DatabaseHealthCheckPeriod   time.Duration `env:"DATABASE_HEALTH_CHECK_PERIOD"    envDefault:"10s"`                   // database health check period
-	HTTPServerAddress           string        `env:"HTTP_SERVER_ADDRESS"             envDefault:"localhost:8080"`        // http server address
 	HTTPServerIdleTimeout       time.Duration `env:"HTTP_SERVER_IDLE_TIMEOUT"        envDefault:"30s"`                   // http server idle timeout
 	HTTPServerReadTimeout       time.Duration `env:"HTTP_SERVER_READ_TIMEOUT"        envDefault:"15s"`                   // http server read timeout
 	HTTPServerReadHeaderTimeout time.Duration `env:"HTTP_SERVER_READ_HEADER_TIMEOUT" envDefault:"15s"`                   // http server read header timeout
