@@ -39,7 +39,7 @@ tasks:
 
   build:
     desc: Build the shortener binary
-    deps: [clean, generate]
+    deps: [clean]
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - |
