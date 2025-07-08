@@ -1,11 +1,23 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/AGENT3128/shortener-url/internal/app"
 	"github.com/AGENT3128/shortener-url/internal/config"
 )
 
+var (
+	buildVersion = "N/A1"
+	buildCommit  = "N/A1"
+	buildDate    = "N/A1"
+)
+
 func main() {
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
+
 	cfg, err := config.NewConfig()
 	if err != nil {
 		panic(err)

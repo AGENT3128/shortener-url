@@ -68,10 +68,16 @@ jobs:
         run: |
           go install golang.org/x/tools/cmd/goimports@latest
 
+      - name: Download taskfile binary
+        run: |
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d v3.42.1
+
       - name: Build server binary
         run: |
-          cd cmd/shortener
-          go build -buildvcs=false -o shortener
+          # cd cmd/shortener
+          # go build -buildvcs=false -o shortener
+          task build
+          mv build/shortener cmd/shortener/shortener
 
       - name: "Code increment #1"
         if: |

@@ -10,6 +10,11 @@ vars:
   SERVER_PORT: 8081
   BASE_URL: "http://localhost:{{.SERVER_PORT}}"
 
+env:
+  VERSION: $(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0~$(git rev-parse --abbrev-ref HEAD)")
+  COMMIT: $(git rev-parse HEAD)
+  DATE: $(date +'%Y-%m-%d %H:%M:%S')
+
 tasks:
   clean:
     desc: Clean build directory
@@ -39,7 +44,7 @@ tasks:
       - mkdir -p {{.BUILD_DIR}}
       - |
         export PATH=$PATH:$(go env GOPATH)/bin
-        go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_FILE}}
+        go build -ldflags "-X 'main.buildVersion={{.VERSION}}' -X 'main.buildCommit={{.COMMIT}}' -X 'main.buildDate={{.DATE}}'" -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_FILE}}
     sources:
       - '**/*.go'
     generates:
