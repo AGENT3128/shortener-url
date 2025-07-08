@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	buildVersion = "N/A1"
-	buildCommit  = "N/A1"
-	buildDate    = "N/A1"
+	buildVersion = "N/A"
+	buildCommit  = "N/A"
+	buildDate    = "N/A"
 )
 
 func main() {
