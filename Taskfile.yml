@@ -11,9 +11,9 @@ vars:
   BASE_URL: "http://localhost:{{.SERVER_PORT}}"
 
 env:
-  VERSION: $(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0~$(git rev-parse --abbrev-ref HEAD)")
-  COMMIT: $(git rev-parse HEAD)
-  DATE: $(date +'%Y-%m-%d %H:%M:%S')
+  VERSION: ${VERSION:-$(git describe --tags --abbrev=0 2>/dev/null || echo "N/A")}
+  COMMIT: ${COMMIT:-$(git rev-parse HEAD)}
+  DATE: ${DATE:-$(date +'%Y-%m-%d %H:%M:%S')}
 
 tasks:
   clean:

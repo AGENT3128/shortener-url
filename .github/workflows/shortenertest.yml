@@ -76,6 +76,9 @@ jobs:
         run: |
           # cd cmd/shortener
           # go build -buildvcs=false -o shortener
+          export VERSION="${GITHUB_REF_NAME:-${GITHUB_HEAD_REF:-$(git describe --tags --abbrev=0 2>/dev/null || echo 'N/A')}}"
+          export COMMIT="${GITHUB_SHA}"
+          export DATE="$(date +'%Y-%m-%d %H:%M:%S')"
           ./bin/task build
           mv build/shortener cmd/shortener/shortener
 
