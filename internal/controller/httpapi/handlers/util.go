@@ -7,9 +7,9 @@ import (
 
 // Response is the response for the JSON.
 type Response struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
 	Data    any    `json:"data"`
+	Message string `json:"message"`
+	Status  int    `json:"status"`
 }
 
 // JSONResponse is the response for the JSON.

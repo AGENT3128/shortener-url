@@ -19,9 +19,9 @@ import (
 
 // MockURLRepository is a mock of URLRepository interface.
 type MockURLRepository struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockURLRepositoryMockRecorder
-	isgomock struct{}
 }
 
 // MockURLRepositoryMockRecorder is the mock recorder for MockURLRepository.
@@ -159,9 +159,9 @@ func (mr *MockURLRepositoryMockRecorder) Ping(ctx any) *gomock.Call {
 
 // MockURLSaver is a mock of URLSaver interface.
 type MockURLSaver struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockURLSaverMockRecorder
-	isgomock struct{}
 }
 
 // MockURLSaverMockRecorder is the mock recorder for MockURLSaver.
@@ -198,9 +198,9 @@ func (mr *MockURLSaverMockRecorder) Add(ctx, userID, shortURL, originalURL any) 
 
 // MockURLGetter is a mock of URLGetter interface.
 type MockURLGetter struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockURLGetterMockRecorder
-	isgomock struct{}
 }
 
 // MockURLGetterMockRecorder is the mock recorder for MockURLGetter.
@@ -252,9 +252,9 @@ func (mr *MockURLGetterMockRecorder) GetByShortURL(ctx, shortURL any) *gomock.Ca
 
 // MockPinger is a mock of Pinger interface.
 type MockPinger struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockPingerMockRecorder
-	isgomock struct{}
 }
 
 // MockPingerMockRecorder is the mock recorder for MockPinger.
@@ -290,9 +290,9 @@ func (mr *MockPingerMockRecorder) Ping(ctx any) *gomock.Call {
 
 // MockBatchURLSaver is a mock of BatchURLSaver interface.
 type MockBatchURLSaver struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockBatchURLSaverMockRecorder
-	isgomock struct{}
 }
 
 // MockBatchURLSaverMockRecorder is the mock recorder for MockBatchURLSaver.
@@ -328,9 +328,9 @@ func (mr *MockBatchURLSaverMockRecorder) AddBatch(ctx, userID, urls any) *gomock
 
 // MockUserURLGetter is a mock of UserURLGetter interface.
 type MockUserURLGetter struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockUserURLGetterMockRecorder
-	isgomock struct{}
 }
 
 // MockUserURLGetterMockRecorder is the mock recorder for MockUserURLGetter.
@@ -367,9 +367,9 @@ func (mr *MockUserURLGetterMockRecorder) GetUserURLs(ctx, userID any) *gomock.Ca
 
 // MockURLDeleter is a mock of URLDeleter interface.
 type MockURLDeleter struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockURLDeleterMockRecorder
-	isgomock struct{}
 }
 
 // MockURLDeleterMockRecorder is the mock recorder for MockURLDeleter.
@@ -405,9 +405,9 @@ func (mr *MockURLDeleterMockRecorder) MarkDeletedBatch(ctx, userID, shortURLs an
 
 // MockCloser is a mock of Closer interface.
 type MockCloser struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockCloserMockRecorder
-	isgomock struct{}
 }
 
 // MockCloserMockRecorder is the mock recorder for MockCloser.

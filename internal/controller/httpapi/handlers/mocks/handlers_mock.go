@@ -19,9 +19,9 @@ import (
 
 // MockURLSaver is a mock of URLSaver interface.
 type MockURLSaver struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockURLSaverMockRecorder
-	isgomock struct{}
 }
 
 // MockURLSaverMockRecorder is the mock recorder for MockURLSaver.
@@ -58,9 +58,9 @@ func (mr *MockURLSaverMockRecorder) Add(ctx, userID, originalURL any) *gomock.Ca
 
 // MockURLGetter is a mock of URLGetter interface.
 type MockURLGetter struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockURLGetterMockRecorder
-	isgomock struct{}
 }
 
 // MockURLGetterMockRecorder is the mock recorder for MockURLGetter.
@@ -97,9 +97,9 @@ func (mr *MockURLGetterMockRecorder) GetByShortURL(ctx, shortURL any) *gomock.Ca
 
 // MockPinger is a mock of Pinger interface.
 type MockPinger struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockPingerMockRecorder
-	isgomock struct{}
 }
 
 // MockPingerMockRecorder is the mock recorder for MockPinger.
@@ -135,9 +135,9 @@ func (mr *MockPingerMockRecorder) Ping(ctx any) *gomock.Call {
 
 // MockBatchURLSaver is a mock of BatchURLSaver interface.
 type MockBatchURLSaver struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockBatchURLSaverMockRecorder
-	isgomock struct{}
 }
 
 // MockBatchURLSaverMockRecorder is the mock recorder for MockBatchURLSaver.
@@ -174,9 +174,9 @@ func (mr *MockBatchURLSaverMockRecorder) AddBatch(ctx, userID, urls any) *gomock
 
 // MockUserURLGetter is a mock of UserURLGetter interface.
 type MockUserURLGetter struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockUserURLGetterMockRecorder
-	isgomock struct{}
 }
 
 // MockUserURLGetterMockRecorder is the mock recorder for MockUserURLGetter.
@@ -213,9 +213,9 @@ func (mr *MockUserURLGetterMockRecorder) GetUserURLs(ctx, userID any) *gomock.Ca
 
 // MockUserURLDeleter is a mock of UserURLDeleter interface.
 type MockUserURLDeleter struct {
+	isgomock struct{}
 	ctrl     *gomock.Controller
 	recorder *MockUserURLDeleterMockRecorder
-	isgomock struct{}
 }
 
 // MockUserURLDeleterMockRecorder is the mock recorder for MockUserURLDeleter.

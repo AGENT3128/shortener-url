@@ -51,16 +51,17 @@ func TestUserURLsHandler(t *testing.T) {
 		method string
 	}
 	type want struct {
-		statusCode  int
-		contentType string
 		response    any
+		contentType string
+		statusCode  int
 	}
-	tests := []struct {
-		name    string
-		request request
-		want    want
+	type test struct {
 		setup   func()
-	}{
+		request request
+		name    string
+		want    want
+	}
+	tests := []test{
 		{
 			name: "success get user urls",
 			request: request{

@@ -65,10 +65,10 @@ func TestMemStorage_GetByShortURL(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
+		wantError error
 		name      string
 		shortURL  string
 		want      string
-		wantError error
 	}{
 		{
 			name:      "existing_url",
@@ -106,10 +106,10 @@ func TestMemStorage_GetByOriginalURL(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
+		wantError   error
 		name        string
 		originalURL string
 		want        string
-		wantError   error
 	}{
 		{
 			name:        "existing_url",

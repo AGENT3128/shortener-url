@@ -43,20 +43,20 @@ type Memento struct {
 
 // Caretaker handles saving and restoring storage state.
 type Caretaker struct {
-	filePath    string
 	logger      *zap.Logger
+	filePath    string
 	saveTimeout time.Duration
 }
 
 // Storage is the file storage for the URL.
 type Storage struct {
-	mu         sync.RWMutex
 	urls       map[string]URLData
-	lastUUID   int
 	logger     *zap.Logger
 	caretaker  *Caretaker
-	isDirty    bool
 	stopSaving chan struct{}
+	lastUUID   int
+	mu         sync.RWMutex
+	isDirty    bool
 }
 
 // Option is the option for the FileStorage.

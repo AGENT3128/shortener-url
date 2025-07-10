@@ -17,12 +17,12 @@ const (
 
 // options is the options for the Server.
 type options struct {
+	handler           http.Handler
 	address           string
 	readHeaderTimeout time.Duration
 	readTimeout       time.Duration
 	writeTimeout      time.Duration
 	idleTimeout       time.Duration
-	handler           http.Handler
 }
 
 // Option is the option for the Server.

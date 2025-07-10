@@ -9,10 +9,10 @@ import (
 )
 
 type Url struct {
-	ID          int32     `db:"id" json:"id"`
+	CreatedAt   time.Time `db:"created_at" json:"created_at"`
 	UserID      string    `db:"user_id" json:"user_id"`
 	ShortUrl    string    `db:"short_url" json:"short_url"`
 	OriginalUrl string    `db:"original_url" json:"original_url"`
-	CreatedAt   time.Time `db:"created_at" json:"created_at"`
+	ID          int32     `db:"id" json:"id"`
 	IsDeleted   bool      `db:"is_deleted" json:"is_deleted"`
 }

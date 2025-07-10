@@ -13,9 +13,9 @@ import (
 )
 
 type options struct {
+	URLusecase URLusecase
 	logger     *zap.Logger
 	baseURL    string
-	URLusecase URLusecase
 }
 
 // Option is the option for the router.

@@ -30,10 +30,10 @@ type DeleteWorker struct {
 	repository     URLDeleter
 	logger         *zap.Logger
 	deleteRequests chan DeleteRequest
-	batchSize      int
-	flushInterval  time.Duration
 	done           chan struct{}
 	wg             sync.WaitGroup
+	batchSize      int
+	flushInterval  time.Duration
 }
 
 // NewDeleteWorker creates a new worker for processing delete requests.

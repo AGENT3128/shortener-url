@@ -10,6 +10,11 @@ vars:
   SERVER_PORT: 8081
   BASE_URL: "http://localhost:{{.SERVER_PORT}}"
 
+env:
+  VERSION: ${VERSION:-$(git describe --tags --abbrev=0 2>/dev/null || echo "N/A")}
+  COMMIT: ${COMMIT:-$(git rev-parse HEAD)}
+  DATE: ${DATE:-$(date +'%Y-%m-%d %H:%M:%S')}
+
 tasks:
   clean:
     desc: Clean build directory
@@ -34,12 +39,12 @@ tasks:
 
   build:
     desc: Build the shortener binary
-    deps: [clean, generate]
+    deps: [clean]
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - |
         export PATH=$PATH:$(go env GOPATH)/bin
-        go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_FILE}}
+        go build -ldflags "-X 'main.buildVersion={{.VERSION}}' -X 'main.buildCommit={{.COMMIT}}' -X 'main.buildDate={{.DATE}}'" -o {{.BUILD_DIR}}/{{.BINARY_NAME}} {{.MAIN_FILE}}
     sources:
       - '**/*.go'
     generates:
@@ -262,3 +267,12 @@ tasks:
     cmds:
       - |
         sh -c "go tool pprof -proto -output=profiles/{{.PROFILE_NAME}}.pprof http://localhost:{{.SERVER_PORT}}/debug/pprof/heap?seconds=15"
+
+  staticlint:
+    desc: Run static lint
+    cmds:
+      - |
+        export PATH=$PATH:$(go env GOPATH)/bin
+        mkdir -p {{.BUILD_DIR}}
+        go build -o {{.BUILD_DIR}}/staticlint cmd/staticlint/main.go
+        {{.BUILD_DIR}}/staticlint ./...
