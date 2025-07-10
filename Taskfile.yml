@@ -233,7 +233,7 @@ tasks:
   run:
     desc: Run the shortener binary
     cmds:
-      - go run {{.MAIN_FILE}} -d {{.DATABASE_DSN}} -http-server-write-timeout=20s
+      - go run {{.MAIN_FILE}} -d {{.DATABASE_DSN}} -http-server-write-timeout=20s -enable-https=true 
 
   k6_upload_url:
     desc: Run a k6 script to upload urls

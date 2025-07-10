@@ -16,6 +16,8 @@ type Config struct {
 	FileStoragePath             string        `env:"FILE_STORAGE_PATH"               envDefault:""`                      // file storage path
 	DatabaseDSN                 string        `env:"DATABASE_DSN"                    envDefault:""`                      // database dsn
 	HTTPServerAddress           string        `env:"HTTP_SERVER_ADDRESS"             envDefault:"localhost:8080"`        // http server address
+	TLSCertPath                 string        `env:"TLS_CERT_PATH"                   envDefault:"shortener.crt"`         // tls cert path
+	TLSKeyPath                  string        `env:"TLS_KEY_PATH"                    envDefault:"shortener.key"`         // tls key path
 	DatabaseMaxConns            int           `env:"DATABASE_MAX_CONNS"              envDefault:"10"`                    // database max conns
 	DatabaseMinConns            int           `env:"DATABASE_MIN_CONNS"              envDefault:"2"`                     // database min conns
 	DatabaseConnMaxLifetime     time.Duration `env:"DATABASE_CONN_MAX_LIFETIME"      envDefault:"10s"`                   // database connection max lifetime
@@ -26,6 +28,7 @@ type Config struct {
 	HTTPServerReadHeaderTimeout time.Duration `env:"HTTP_SERVER_READ_HEADER_TIMEOUT" envDefault:"15s"`                   // http server read header timeout
 	HTTPServerWriteTimeout      time.Duration `env:"HTTP_SERVER_WRITE_TIMEOUT"       envDefault:"10s"`                   // http server write timeout
 	GracefulShutdownTimeout     time.Duration `env:"GRACEFUL_SHUTDOWN_TIMEOUT"       envDefault:"20s"`                   // graceful shutdown timeout
+	EnableHTTPS                 bool          `env:"ENABLE_HTTPS"                    envDefault:"false"`                 // enable https
 }
 
 // NewConfig creates a new Config instance.
@@ -104,6 +107,24 @@ func NewConfig() (*Config, error) {
 		"database-health-check-period",
 		cfg.DatabaseHealthCheckPeriod,
 		"Database health check period",
+	)
+	flag.BoolVar(
+		&cfg.EnableHTTPS,
+		"enable-https",
+		cfg.EnableHTTPS,
+		"Enable HTTPS",
+	)
+	flag.StringVar(
+		&cfg.TLSCertPath,
+		"tls-cert-path",
+		cfg.TLSCertPath,
+		"TLS cert path",
+	)
+	flag.StringVar(
+		&cfg.TLSKeyPath,
+		"tls-key-path",
+		cfg.TLSKeyPath,
+		"TLS key path",
 	)
 	flag.Parse()
 
