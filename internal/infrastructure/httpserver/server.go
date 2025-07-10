@@ -87,6 +87,7 @@ func New(opts ...Option) (*Server, error) {
 			return nil, fmt.Errorf("failed to load TLS certificate: %w", err)
 		}
 		server.httpServer.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS13,
 			Certificates: []tls.Certificate{
 				cert,
 			},
