@@ -2,21 +2,22 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/AGENT3128/shortener-url/internal/app"
 	"github.com/AGENT3128/shortener-url/internal/config"
 )
 
 var (
-	buildVersion = "N/A"
-	buildCommit  = "N/A"
-	buildDate    = "N/A"
+	buildVersion = "N/A" //nolint:gochecknoglobals // build version - tag or branch name
+	buildCommit  = "N/A" //nolint:gochecknoglobals // commit hash
+	buildDate    = "N/A" //nolint:gochecknoglobals // build date
 )
 
 func main() {
-	fmt.Printf("Build version: %s\n", buildVersion)
-	fmt.Printf("Build date: %s\n", buildDate)
-	fmt.Printf("Build commit: %s\n", buildCommit)
+	_, _ = fmt.Fprintf(os.Stdout, "Build version: %s\n", buildVersion)
+	_, _ = fmt.Fprintf(os.Stdout, "Build date: %s\n", buildDate)
+	_, _ = fmt.Fprintf(os.Stdout, "Build commit: %s\n", buildCommit)
 
 	cfg, err := config.NewConfig()
 	if err != nil {

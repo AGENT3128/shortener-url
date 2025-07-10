@@ -42,8 +42,8 @@ func NewAnalyzer() *analysis.Analyzer {
 }
 
 func run(pass *analysis.Pass) (any, error) {
-	if !isMainPackage(pass) {
-		return nil, nil
+	if pass.Pkg.Name() != "main" {
+		return nil, nil //nolint:nilnil // analyzer with nil ResultType should return nil
 	}
 
 	inspector, err := getInspector(pass)
@@ -52,11 +52,7 @@ func run(pass *analysis.Pass) (any, error) {
 	}
 
 	checkMainFunctions(pass, inspector)
-	return nil, nil
-}
-
-func isMainPackage(pass *analysis.Pass) bool {
-	return pass.Pkg.Name() == "main"
+	return nil, nil //nolint:nilnil // analyzer with nil ResultType should return nil
 }
 
 func getInspector(pass *analysis.Pass) (*inspector.Inspector, error) {
@@ -74,33 +70,25 @@ func checkMainFunctions(pass *analysis.Pass, insp *inspector.Inspector) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl, castOK := n.(*ast.FuncDecl)
-		if !castOK || !isMainFunction(funcDecl) {
+		if !castOK || funcDecl.Name.Name != "main" {
 			return
 		}
 
-		checkFunctionBodyForOSExit(pass, funcDecl.Body)
-	})
-}
+		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+			callExpr, isCall := node.(*ast.CallExpr)
+			if !isCall {
+				return true
+			}
 
-func isMainFunction(funcDecl *ast.FuncDecl) bool {
-	return funcDecl.Name.Name == "main"
-}
+			if isOSExitCall(pass, callExpr) {
+				pass.Reportf(
+					callExpr.Pos(),
+					"direct call to os.Exit in main function of main package is prohibited",
+				)
+			}
 
-func checkFunctionBodyForOSExit(pass *analysis.Pass, body *ast.BlockStmt) {
-	ast.Inspect(body, func(node ast.Node) bool {
-		callExpr, isCall := node.(*ast.CallExpr)
-		if !isCall {
 			return true
-		}
-
-		if isOSExitCall(pass, callExpr) {
-			pass.Reportf(
-				callExpr.Pos(),
-				"direct call to os.Exit in main function of main package is prohibited",
-			)
-		}
-
-		return true
+		})
 	})
 }
 
