@@ -172,6 +172,7 @@ func WithHTTPS(enableHTTPS bool) Option {
 	}
 }
 
+// WithTLSCertPath is the option for the Server to set the TLS cert path.
 func WithTLSCertPath(tlsCertPath string) Option {
 	return func(options *options) error {
 		options.tlsCertPath = tlsCertPath
@@ -179,6 +180,7 @@ func WithTLSCertPath(tlsCertPath string) Option {
 	}
 }
 
+// WithTLSKeyPath is the option for the Server to set the TLS key path.
 func WithTLSKeyPath(tlsKeyPath string) Option {
 	return func(options *options) error {
 		options.tlsKeyPath = tlsKeyPath
