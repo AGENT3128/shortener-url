@@ -10,11 +10,6 @@ vars:
   SERVER_PORT: 8081
   BASE_URL: "http://localhost:{{.SERVER_PORT}}"
 
-env:
-  VERSION: ${VERSION:-$(git describe --tags --abbrev=0 2>/dev/null || echo "N/A")}
-  COMMIT: ${COMMIT:-$(git rev-parse HEAD)}
-  DATE: ${DATE:-$(date +'%Y-%m-%d %H:%M:%S')}
-
 tasks:
   clean:
     desc: Clean build directory
@@ -40,6 +35,13 @@ tasks:
   build:
     desc: Build the shortener binary
     deps: [clean]
+    vars:
+      VERSION:
+        sh: echo "${VERSION:-$(git describe --tags --abbrev=0 2>/dev/null || echo "N/A")}"
+      COMMIT:
+        sh: echo "${COMMIT:-$(git rev-parse HEAD)}"
+      DATE:
+        sh: echo "${DATE:-$(date +'%Y-%m-%d %H:%M:%S')}"
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - |
