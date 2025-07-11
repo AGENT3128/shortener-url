@@ -33,3 +33,6 @@ coverage.html
 *.crt
 *.key
 cert.conf
+
+# Config file
+example_config.json
