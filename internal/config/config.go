@@ -44,8 +44,8 @@ func NewConfig() (*Config, error) {
 	cfg := &Config{}
 
 	// Load config from file
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath != "" {
+	configPath, exists := os.LookupEnv("CONFIG_PATH")
+	if exists && configPath != "" {
 		if err := cfg.loadFromJSONFile(configPath); err != nil {
 			return nil, fmt.Errorf("failed to load config from file: %w", err)
 		}
