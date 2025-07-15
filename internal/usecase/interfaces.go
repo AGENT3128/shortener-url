@@ -17,6 +17,12 @@ type URLRepository interface {
 	UserURLGetter
 	URLDeleter
 	Closer
+	StatsGetter
+}
+
+// StatsGetter is the interface for the StatsGetter.
+type StatsGetter interface {
+	GetStats(ctx context.Context) (urlsCount int, usersCount int, err error)
 }
 
 // URLSaver is the interface for the URLSaver.

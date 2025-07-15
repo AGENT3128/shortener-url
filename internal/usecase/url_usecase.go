@@ -191,3 +191,12 @@ func (uc *URLUsecase) DeleteUserURLs(_ context.Context, userID string, shortURLs
 	}
 	return nil
 }
+
+// GetStats gets stats.
+func (uc *URLUsecase) GetStats(ctx context.Context) (int, int, error) {
+	urlsCount, usersCount, err := uc.repository.GetStats(ctx)
+	if err != nil {
+		return 0, 0, err
+	}
+	return urlsCount, usersCount, nil
+}

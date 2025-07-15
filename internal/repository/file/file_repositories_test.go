@@ -255,3 +255,26 @@ func TestPeriodicSaving(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "https://periodic1.com", url)
 }
+
+func TestGetStats(t *testing.T) {
+	ts := setupTestStorage(t)
+	defer ts.cleanup(t)
+
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	urlsCount, usersCount, err := ts.storage.GetStats(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 0, urlsCount)
+	require.Equal(t, 0, usersCount)
+
+	_, err = ts.storage.Add(ctx, "user1", "test1", "https://example1.com")
+	require.NoError(t, err)
+	_, err = ts.storage.Add(ctx, "user1", "test2", "https://example2.com")
+	require.NoError(t, err)
+
+	urlsCount, usersCount, err = ts.storage.GetStats(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, urlsCount)
+	require.Equal(t, 1, usersCount)
+}

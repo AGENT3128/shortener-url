@@ -35,3 +35,8 @@ type UserURLGetter interface {
 type UserURLDeleter interface {
 	DeleteUserURLs(ctx context.Context, userID string, shortURLs []string) error
 }
+
+// StatsGetter is the interface for getting stats.
+type StatsGetter interface {
+	GetStats(ctx context.Context) (urlsCount int, usersCount int, err error)
+}

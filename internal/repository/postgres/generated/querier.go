@@ -10,6 +10,7 @@ import (
 
 type Querier interface {
 	AddURL(ctx context.Context, arg AddURLParams) (string, error)
+	GetStats(ctx context.Context) (GetStatsRow, error)
 	GetURLByOriginalURL(ctx context.Context, originalUrl string) (string, error)
 	GetURLByShortURL(ctx context.Context, shortUrl string) (GetURLByShortURLRow, error)
 	GetURLsByUserID(ctx context.Context, userID string) ([]Url, error)

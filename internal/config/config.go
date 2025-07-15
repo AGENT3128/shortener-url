@@ -25,6 +25,7 @@ type Config struct {
 	HTTPServerAddress           string        `json:"http_server_address,omitempty"             env:"HTTP_SERVER_ADDRESS"             envDefault:"localhost:8080"`        // http server address
 	TLSCertPath                 string        `json:"tls_cert_path,omitempty"                   env:"TLS_CERT_PATH"                   envDefault:""`                      // tls cert path
 	TLSKeyPath                  string        `json:"tls_key_path,omitempty"                    env:"TLS_KEY_PATH"                    envDefault:""`                      // tls key path
+	TrustedSubnet               string        `json:"trusted_subnet,omitempty"                  env:"TRUSTED_SUBNET"                  envDefault:""`                      // trusted subnet
 	DatabaseMaxConns            int           `json:"database_max_conns,omitempty"              env:"DATABASE_MAX_CONNS"              envDefault:"10"`                    // database max conns
 	DatabaseMinConns            int           `json:"database_min_conns,omitempty"              env:"DATABASE_MIN_CONNS"              envDefault:"2"`                     // database min conns
 	DatabaseConnMaxLifetime     time.Duration `json:"database_conn_max_lifetime,omitempty"      env:"DATABASE_CONN_MAX_LIFETIME"      envDefault:"10s"`                   // database connection max lifetime
@@ -131,6 +132,7 @@ func parseFlags(cfg *Config) {
 	flag.StringVar(&cfg.TLSKeyPath, "tls-key-path", cfg.TLSKeyPath, "TLS key path")
 	flag.StringVar(&cfg.ConfigPath, "c", cfg.ConfigPath, "Path to config file")
 	flag.StringVar(&cfg.ConfigPath, "config", cfg.ConfigPath, "Path to config file")
+	flag.StringVar(&cfg.TrustedSubnet, "t", cfg.TrustedSubnet, "Trusted subnet")
 	flag.Parse()
 }
 

@@ -13,9 +13,10 @@ import (
 )
 
 type options struct {
-	URLusecase URLusecase
-	logger     *zap.Logger
-	baseURL    string
+	URLusecase    URLusecase
+	logger        *zap.Logger
+	baseURL       string
+	trustedSubnet string
 }
 
 // Option is the option for the router.
@@ -41,6 +42,14 @@ func WithBaseURL(baseURL string) Option {
 func WithURLUsecase(usecase URLusecase) Option {
 	return func(options *options) error {
 		options.URLusecase = usecase
+		return nil
+	}
+}
+
+// WithTrustedSubnet is the option for the router to set the trusted subnet.
+func WithTrustedSubnet(trustedSubnet string) Option {
+	return func(options *options) error {
+		options.trustedSubnet = trustedSubnet
 		return nil
 	}
 }
@@ -145,6 +154,16 @@ func initializeHandlers(router *chi.Mux, options *options) error {
 	if err != nil {
 		return err
 	}
+
+	statsURLsHandler, err := handlers.NewStatsURLsHandler(
+		handlers.WithStatsURLsUsecase(options.URLusecase),
+		handlers.WithStatsURLsLogger(options.logger),
+		handlers.WithStatsURLsTrustedSubnet(options.trustedSubnet),
+	)
+	if err != nil {
+		return err
+	}
+
 	h := []handler{
 		shortenHandler,
 		redirectHandler,
@@ -153,6 +172,7 @@ func initializeHandlers(router *chi.Mux, options *options) error {
 		batchShortenHandler,
 		userURLsHandler,
 		userURLsDeleteHandler,
+		statsURLsHandler,
 	}
 
 	for _, h := range h {
