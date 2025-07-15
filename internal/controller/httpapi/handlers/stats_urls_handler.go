@@ -90,6 +90,11 @@ func (h *StatsURLsHandler) HandlerFunc() http.HandlerFunc {
 		// Check trusted subnet
 		isTrusted, err := isIPInTrustedSubnet(r, h.trustedSubnet)
 		if err != nil {
+			if errors.Is(err, ErrTrustedSubnetEmpty) {
+				h.logger.Error("trusted subnet is empty", zap.Error(err))
+				JSONResponse(w, http.StatusForbidden, "Forbidden")
+				return
+			}
 			h.logger.Error("failed to check trusted subnet", zap.Error(err))
 			JSONResponse(w, http.StatusInternalServerError, "Internal Server Error")
 			return
