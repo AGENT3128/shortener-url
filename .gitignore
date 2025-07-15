@@ -28,3 +28,11 @@ build
 test.json
 coverage.out
 coverage.html
+
+# TLS certificates
+*.crt
+*.key
+cert.conf
+
+# Config file
+example_config.json

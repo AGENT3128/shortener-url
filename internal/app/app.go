@@ -153,6 +153,9 @@ func Run(cfg *config.Config) error {
 		httpserver.WithWriteTimeout(cfg.HTTPServerWriteTimeout),
 		httpserver.WithIdleTimeout(cfg.HTTPServerIdleTimeout),
 		httpserver.WithHandler(router),
+		httpserver.WithHTTPS(cfg.EnableHTTPS),
+		httpserver.WithTLSCertPath(cfg.TLSCertPath),
+		httpserver.WithTLSKeyPath(cfg.TLSKeyPath),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create server: %w", err)

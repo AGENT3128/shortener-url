@@ -2,6 +2,8 @@ package httpserver
 
 import (
 	"context"
+	"crypto/tls"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -19,10 +21,13 @@ const (
 type options struct {
 	handler           http.Handler
 	address           string
+	tlsCertPath       string
+	tlsKeyPath        string
 	readHeaderTimeout time.Duration
 	readTimeout       time.Duration
 	writeTimeout      time.Duration
 	idleTimeout       time.Duration
+	enableHTTPS       bool
 }
 
 // Option is the option for the Server.
@@ -76,6 +81,19 @@ func New(opts ...Option) (*Server, error) {
 		server.httpServer.Handler = options.handler
 	}
 
+	if options.enableHTTPS {
+		cert, err := tls.LoadX509KeyPair(options.tlsCertPath, options.tlsKeyPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load TLS certificate: %w", err)
+		}
+		server.httpServer.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS13,
+			Certificates: []tls.Certificate{
+				cert,
+			},
+		}
+	}
+
 	return server, nil
 }
 
@@ -86,6 +104,10 @@ func (s *Server) Address() string {
 
 // Start starts the Server.
 func (s *Server) Start() error {
+	if s.httpServer.TLSConfig != nil {
+		return s.httpServer.ListenAndServeTLS("", "")
+	}
+
 	return s.httpServer.ListenAndServe()
 }
 
@@ -138,6 +160,30 @@ func WithWriteTimeout(writeTimeout time.Duration) Option {
 func WithIdleTimeout(idleTimeout time.Duration) Option {
 	return func(options *options) error {
 		options.idleTimeout = idleTimeout
+		return nil
+	}
+}
+
+// WithHTTPS is the option for the Server to set the enable HTTPS.
+func WithHTTPS(enableHTTPS bool) Option {
+	return func(options *options) error {
+		options.enableHTTPS = enableHTTPS
+		return nil
+	}
+}
+
+// WithTLSCertPath is the option for the Server to set the TLS cert path.
+func WithTLSCertPath(tlsCertPath string) Option {
+	return func(options *options) error {
+		options.tlsCertPath = tlsCertPath
+		return nil
+	}
+}
+
+// WithTLSKeyPath is the option for the Server to set the TLS key path.
+func WithTLSKeyPath(tlsKeyPath string) Option {
+	return func(options *options) error {
+		options.tlsKeyPath = tlsKeyPath
 		return nil
 	}
 }
