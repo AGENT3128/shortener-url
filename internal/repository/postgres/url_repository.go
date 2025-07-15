@@ -135,3 +135,12 @@ func (r *URLRepository) Close() error {
 	r.db.Pool.Close()
 	return nil
 }
+
+// GetStats gets stats.
+func (r *URLRepository) GetStats(ctx context.Context) (int, int, error) {
+	stats, err := r.queries.GetStats(ctx)
+	if err != nil {
+		return 0, 0, err
+	}
+	return int(stats.UrlsCount), int(stats.UsersCount), nil
+}

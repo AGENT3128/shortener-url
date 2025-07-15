@@ -553,3 +553,61 @@ func TestURLUsecase_Ping(t *testing.T) {
 		})
 	}
 }
+
+func TestURLUsecase_GetStats(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	urlRepositoryMock := mocks.NewMockURLRepository(ctrl)
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+
+	usecase, err := usecase.NewURLUsecase(
+		usecase.WithURLUsecaseRepository(urlRepositoryMock),
+		usecase.WithURLUsecaseLogger(logger),
+	)
+	require.NoError(t, err)
+
+	tests := []struct {
+		setup   func()
+		name    string
+		wantErr bool
+	}{
+		{
+			name: "success get stats",
+			setup: func() {
+				urlRepositoryMock.EXPECT().
+					GetStats(gomock.Any()).
+					Return(1, 1, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "repository error",
+			setup: func() {
+				urlRepositoryMock.EXPECT().
+					GetStats(gomock.Any()).
+					Return(0, 0, errors.New("repository error"))
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+
+			urlsCount, usersCount, errGetStats := usecase.GetStats(ctx)
+			if tt.wantErr {
+				require.Error(t, errGetStats)
+			} else {
+				require.NoError(t, errGetStats)
+				require.Equal(t, 1, urlsCount)
+				require.Equal(t, 1, usersCount)
+			}
+			time.Sleep(100 * time.Millisecond)
+		})
+	}
+}

@@ -61,6 +61,11 @@ type Closer interface {
 	Close() error
 }
 
+// StatsGetter is an interface that defines the method for getting stats.
+type StatsGetter interface {
+	GetStats(ctx context.Context) (urlsCount int, usersCount int, err error)
+}
+
 // Repository is an interface that defines the methods for the repository.
 type Repository interface {
 	URLSaver
@@ -70,6 +75,7 @@ type Repository interface {
 	UserURLGetter
 	URLDeleter
 	Closer
+	StatsGetter
 }
 
 // Run is the main function for running the application.
@@ -141,6 +147,7 @@ func Run(cfg *config.Config) error {
 		httpapi.WithLogger(logger),
 		httpapi.WithBaseURL(cfg.BaseURLAddress),
 		httpapi.WithURLUsecase(urlUsecase),
+		httpapi.WithTrustedSubnet(cfg.TrustedSubnet),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create router: %w", err)

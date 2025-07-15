@@ -259,3 +259,27 @@ func TestMemStorage_Ping(t *testing.T) {
 	err = repo.Ping(t.Context())
 	require.NoError(t, err)
 }
+
+func TestMemStorage_GetStats(t *testing.T) {
+	logger, err := zap.NewDevelopment()
+	require.NoError(t, err)
+	repo := memory.NewMemStorage(logger)
+
+	urlsCount, usersCount, err := repo.GetStats(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 0, urlsCount)
+	require.Equal(t, 0, usersCount)
+
+	urls := []entity.URL{
+		{ShortURL: "short1", OriginalURL: "https://test1.com"},
+		{ShortURL: "short2", OriginalURL: "https://test2.com"},
+	}
+
+	err = repo.AddBatch(t.Context(), "user1", urls)
+	require.NoError(t, err)
+
+	urlsCount, usersCount, err = repo.GetStats(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 2, urlsCount)
+	require.Equal(t, 1, usersCount)
+}

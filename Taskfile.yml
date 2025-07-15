@@ -57,7 +57,7 @@ tasks:
     cmds:
       - |
         export PATH=$PATH:$(go env GOPATH)/bin
-        golangci-lint run ./... --fix
+        golangci-lint run ./...
 
   test:
     desc: Run tests
@@ -235,7 +235,7 @@ tasks:
   run:
     desc: Run the shortener binary
     cmds:
-      - go run {{.MAIN_FILE}} -d {{.DATABASE_DSN}} -http-server-write-timeout=20s -enable-https=true 
+      - go run {{.MAIN_FILE}} -d {{.DATABASE_DSN}} -http-server-write-timeout=20s -enable-https=true -tls-cert-path=shortener.crt -tls-key-path=shortener.key -t 127.0.0.0/24
 
   k6_upload_url:
     desc: Run a k6 script to upload urls

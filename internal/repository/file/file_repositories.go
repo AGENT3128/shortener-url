@@ -354,3 +354,24 @@ func (f *Storage) MarkDeletedBatch(_ context.Context, userID string, shortURLs [
 
 	return nil
 }
+
+// GetStats gets stats.
+func (f *Storage) GetStats(_ context.Context) (int, int, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	countUsers := make(map[string]int)
+	countURLs := 0
+
+	for _, url := range f.urls {
+		if !url.IsDeleted {
+			countURLs++
+		}
+		countUsers[url.UserID]++
+	}
+
+	usersCount := len(countUsers)
+	urlsCount := countURLs
+
+	return urlsCount, usersCount, nil
+}

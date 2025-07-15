@@ -58,6 +58,11 @@ type UserURLDeleter interface {
 	DeleteUserURLs(ctx context.Context, userID string, shortURLs []string) error
 }
 
+// StatsGetter is the interface for the stats getter.
+type StatsGetter interface {
+	GetStats(ctx context.Context) (urlsCount int, usersCount int, err error)
+}
+
 // URLusecase is the interface for the URL usecase.
 type URLusecase interface {
 	URLSaver
@@ -66,4 +71,5 @@ type URLusecase interface {
 	BatchURLSaver
 	UserURLGetter
 	UserURLDeleter
+	StatsGetter
 }
